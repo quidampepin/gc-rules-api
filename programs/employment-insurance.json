@@ -1,0 +1,239 @@
+{
+  "id": "employment-insurance",
+  "name": {
+    "en": "Employment Insurance - Regular Benefits",
+    "fr": "Assurance-emploi - Prestations régulières"
+  },
+  "administered_by": {
+    "id": "employment-social-development-canada",
+    "name": {
+      "en": "Employment and Social Development Canada",
+      "fr": "Emploi et Développement social Canada"
+    }
+  },
+  "description": {
+    "en": "Temporary financial assistance to workers who have lost their job through no fault of their own while they look for work or upgrade their skills.",
+    "fr": "Aide financière temporaire aux travailleurs qui ont perdu leur emploi sans en être responsables pendant qu'ils cherchent du travail ou perfectionnent leurs compétences."
+  },
+  "last_updated": "2026-04-07",
+  "effective_date": "2024-01-01",
+  "next_review_date": "2025-01-01",
+  "status": "active",
+  "source_urls": {
+    "en": "https://www.canada.ca/en/services/benefits/ei/ei-regular.html",
+    "fr": "https://www.canada.ca/fr/services/prestations/ae/ae-reguliere.html"
+  },
+  "legislation": [
+    {
+      "name": { "en": "Employment Insurance Act", "fr": "Loi sur l'assurance-emploi" },
+      "url": {
+        "en": "https://laws-lois.justice.gc.ca/eng/acts/e-5.6/",
+        "fr": "https://laws-lois.justice.gc.ca/fra/lois/e-5.6/"
+      }
+    }
+  ],
+
+  "eligibility": {
+    "summary": {
+      "en": "You must have lost your job through no fault of your own, worked enough insurable hours, and be ready and willing to work.",
+      "fr": "Vous devez avoir perdu votre emploi sans en être responsable, avoir accumulé suffisamment d'heures assurables et être prêt et disposé à travailler."
+    },
+    "criteria": [
+      {
+        "id": "insurable_employment",
+        "description": { "en": "Were employed in insurable employment", "fr": "Occupiez un emploi assurable" },
+        "type": "boolean",
+        "field": "was_insurable_employment",
+        "operator": "eq",
+        "value": true,
+        "required": true
+      },
+      {
+        "id": "job_loss_reason",
+        "description": {
+          "en": "Lost your job through no fault of your own (e.g., shortage of work, seasonal layoff, mass layoff)",
+          "fr": "Avez perdu votre emploi sans en être responsable (p. ex. manque de travail, mise à pied saisonnière, licenciement collectif)"
+        },
+        "type": "categorical",
+        "field": "separation_reason",
+        "operator": "in",
+        "value": ["shortage_of_work", "end_of_contract", "seasonal_layoff", "mass_layoff", "company_closure"],
+        "required": true
+      },
+      {
+        "id": "without_work_7_days",
+        "description": {
+          "en": "Without work and without pay for at least 7 consecutive days in the last 52 weeks",
+          "fr": "Sans travail et sans rémunération pendant au moins 7 jours consécutifs au cours des 52 dernières semaines"
+        },
+        "type": "numeric_threshold",
+        "field": "consecutive_days_without_work",
+        "operator": "gte",
+        "value": "$param:min_days_without_work",
+        "required": true
+      },
+      {
+        "id": "insurable_hours",
+        "description": {
+          "en": "Worked the required number of insurable hours (420 to 700, depending on regional unemployment rate)",
+          "fr": "Avez accumulé le nombre d'heures assurables requis (420 à 700, selon le taux de chômage régional)"
+        },
+        "type": "numeric_threshold",
+        "field": "insurable_hours",
+        "operator": "gte",
+        "value": "$param:min_insurable_hours",
+        "required": true
+      },
+      {
+        "id": "ready_willing_capable",
+        "description": { "en": "Ready, willing, and capable of working each day", "fr": "Prêt, disposé et capable de travailler chaque jour" },
+        "type": "boolean",
+        "field": "is_ready_willing_capable",
+        "operator": "eq",
+        "value": true,
+        "required": true
+      },
+      {
+        "id": "actively_seeking",
+        "description": {
+          "en": "Actively looking for work (must keep a written record of employers contacted)",
+          "fr": "Cherchez activement du travail (devez tenir un registre écrit des employeurs contactés)"
+        },
+        "type": "boolean",
+        "field": "is_actively_seeking",
+        "operator": "eq",
+        "value": true,
+        "required": true
+      }
+    ],
+    "decision_table": {
+      "inputs": [
+        { "id": "was_insurable_employment", "label": { "en": "Insurable employment", "fr": "Emploi assurable" }, "type": "boolean" },
+        { "id": "separation_reason", "label": { "en": "Reason for separation", "fr": "Raison de la cessation d'emploi" }, "type": "string" },
+        { "id": "insurable_hours", "label": { "en": "Insurable hours in qualifying period", "fr": "Heures assurables pendant la période de référence" }, "type": "number" },
+        { "id": "regional_unemployment_rate", "label": { "en": "Regional unemployment rate (%)", "fr": "Taux de chômage régional (%)" }, "type": "number" },
+        { "id": "is_ready_willing_capable", "label": { "en": "Ready and willing to work", "fr": "Prêt et disposé à travailler" }, "type": "boolean" }
+      ],
+      "rules": [
+        {
+          "conditions": { "was_insurable_employment": { "operator": "eq", "value": false } },
+          "outcome": "not_eligible",
+          "note": { "en": "Must have been in insurable employment", "fr": "Doit avoir occupé un emploi assurable" }
+        },
+        {
+          "conditions": { "separation_reason": { "operator": "in", "value": ["quit_voluntarily", "fired_for_misconduct"] } },
+          "outcome": "not_eligible",
+          "note": { "en": "Cannot have quit voluntarily or been fired for misconduct", "fr": "Ne peut pas avoir quitté volontairement ou avoir été congédié pour inconduite" }
+        },
+        {
+          "conditions": { "is_ready_willing_capable": { "operator": "eq", "value": false } },
+          "outcome": "not_eligible"
+        }
+      ],
+      "default_outcome": "may_be_eligible"
+    }
+  },
+
+  "amounts": {
+    "currency": "CAD",
+    "payment_frequency": "bi-weekly",
+    "summary": {
+      "en": "The basic rate is 55% of your average insurable weekly earnings, up to a maximum.",
+      "fr": "Le taux de base est de 55 % de votre rémunération hebdomadaire assurable moyenne, jusqu'à un maximum."
+    },
+    "parameters": [
+      { "id": "benefit_rate", "label": { "en": "Basic benefit rate", "fr": "Taux de prestation de base" }, "value": 55, "unit": "percent", "effective_date": "2024-01-01" },
+      { "id": "max_insurable_earnings", "label": { "en": "Maximum yearly insurable earnings", "fr": "Maximum de la rémunération annuelle assurable" }, "value": 63200, "unit": "dollars", "effective_date": "2024-01-01" },
+      { "id": "max_weekly_benefit", "label": { "en": "Maximum weekly benefit", "fr": "Prestation hebdomadaire maximale" }, "value": 668, "unit": "dollars", "effective_date": "2024-01-01" },
+      { "id": "waiting_period_weeks", "label": { "en": "Waiting period", "fr": "Période d'attente" }, "value": 1, "unit": "weeks", "effective_date": "2024-01-01" },
+      { "id": "min_weeks_payable", "label": { "en": "Minimum weeks of benefits", "fr": "Nombre minimum de semaines de prestations" }, "value": 14, "unit": "weeks" },
+      { "id": "max_weeks_payable", "label": { "en": "Maximum weeks of benefits", "fr": "Nombre maximum de semaines de prestations" }, "value": 45, "unit": "weeks" },
+      { "id": "min_insurable_hours", "label": { "en": "Minimum insurable hours required (varies by region, this is the lowest)", "fr": "Heures assurables minimales requises (varie par région, ceci est le minimum)" }, "value": 420, "unit": "hours" },
+      { "id": "max_insurable_hours", "label": { "en": "Maximum insurable hours required (highest unemployment regions)", "fr": "Heures assurables maximales requises (régions à chômage élevé)" }, "value": 700, "unit": "hours" },
+      { "id": "min_days_without_work", "label": { "en": "Minimum consecutive days without work", "fr": "Jours consécutifs minimum sans travail" }, "value": 7, "unit": "days" },
+      { "id": "qualifying_period_weeks", "label": { "en": "Qualifying period (look-back)", "fr": "Période de référence (rétrospective)" }, "value": 52, "unit": "weeks" }
+    ],
+
+    "calculation": {
+      "description": {
+        "en": "Weekly benefit = min($param:benefit_rate% × average insurable weekly earnings, $param:max_weekly_benefit).",
+        "fr": "Prestation hebdomadaire = min($param:benefit_rate % × rémunération hebdomadaire assurable moyenne, $param:max_weekly_benefit)."
+      },
+      "formula": "min($param:benefit_rate / 100 * average_insurable_weekly_earnings, $param:max_weekly_benefit)",
+      "duration_table": {
+        "description": {
+          "en": "Number of weeks of benefits depends on insurable hours worked and regional unemployment rate. Ranges from $param:min_weeks_payable to $param:max_weeks_payable weeks.",
+          "fr": "Le nombre de semaines de prestations dépend des heures assurables et du taux de chômage régional. Varie de $param:min_weeks_payable à $param:max_weeks_payable semaines."
+        }
+      }
+    },
+
+    "examples": [
+      {
+        "scenario": { "en": "Worker earning $52,000/year ($1,000/week), laid off", "fr": "Travailleur gagnant 52 000 $/an (1 000 $/semaine), mis à pied" },
+        "inputs": { "average_insurable_weekly_earnings": 1000 },
+        "result": {
+          "weekly": 550,
+          "explanation": {
+            "en": "$param:benefit_rate% × $1,000 = $550/week (below the $param:max_weekly_benefit maximum).",
+            "fr": "$param:benefit_rate % × 1 000 $ = 550 $/semaine (sous le maximum de $param:max_weekly_benefit)."
+          }
+        }
+      },
+      {
+        "scenario": { "en": "Worker earning $80,000/year, laid off", "fr": "Travailleur gagnant 80 000 $/an, mis à pied" },
+        "inputs": { "average_insurable_weekly_earnings": 1538.46 },
+        "result": {
+          "weekly": 668,
+          "explanation": {
+            "en": "$param:benefit_rate% × $1,538.46 = $846.15, but capped at $param:max_weekly_benefit/week.",
+            "fr": "$param:benefit_rate % × 1 538,46 $ = 846,15 $, mais plafonné à $param:max_weekly_benefit/semaine."
+          }
+        }
+      }
+    ]
+  },
+
+  "how_to_apply": {
+    "channels": [
+      {
+        "method": "online",
+        "description": {
+          "en": "Apply online through the Service Canada website",
+          "fr": "Faites une demande en ligne sur le site de Service Canada"
+        },
+        "url": {
+          "en": "https://www.canada.ca/en/services/benefits/ei/ei-regular.html",
+          "fr": "https://www.canada.ca/fr/services/prestations/ae/ae-reguliere.html"
+        },
+        "steps": [
+          { "en": "Gather your SIN, Record of Employment (ROE), and banking info", "fr": "Rassemblez votre NAS, relevé d'emploi (RE) et vos renseignements bancaires" },
+          { "en": "Complete the online application (about 1 hour)", "fr": "Remplissez la demande en ligne (environ 1 heure)" },
+          { "en": "Submit bi-weekly reports to continue receiving benefits", "fr": "Soumettez des déclarations bimensuelles pour continuer à recevoir des prestations" }
+        ]
+      }
+    ],
+    "required_documents": [
+      { "en": "Social Insurance Number (SIN)", "fr": "Numéro d'assurance sociale (NAS)" },
+      { "en": "Record of Employment (ROE) from your employer", "fr": "Relevé d'emploi (RE) de votre employeur" },
+      { "en": "Banking information for direct deposit", "fr": "Renseignements bancaires pour le dépôt direct" },
+      { "en": "Parent's last name at birth", "fr": "Nom de famille à la naissance d'un des parents" }
+    ]
+  },
+
+  "fees": {
+    "has_fees": false,
+    "details": {
+      "en": "There are no fees to apply for EI benefits.",
+      "fr": "Il n'y a aucun frais pour demander des prestations d'AE."
+    }
+  },
+
+  "processing_time": {
+    "standard_days": 28,
+    "details": {
+      "en": "Standard processing time is within 28 days of filing. Payments are issued after bi-weekly reports are processed.",
+      "fr": "Le délai de traitement standard est de 28 jours suivant le dépôt de la demande. Les paiements sont émis après le traitement des déclarations bimensuelles."
+    }
+  }
+}

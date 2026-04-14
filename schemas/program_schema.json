@@ -1,0 +1,343 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://api.canada.ca/rules/v1/program.schema.json",
+  "title": "GC Program Rules Schema",
+  "description": "Schema for encoding Government of Canada program rules, amounts, and eligibility criteria as structured, queryable, computable data.",
+  "type": "object",
+  "required": ["id", "name", "administered_by", "last_updated", "effective_date", "status", "eligibility", "amounts", "how_to_apply"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique program identifier (kebab-case)"
+    },
+    "name": {
+      "$ref": "#/definitions/bilingual_text",
+      "description": "Official program name"
+    },
+    "administered_by": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "$ref": "#/definitions/bilingual_text" }
+      }
+    },
+    "description": {
+      "$ref": "#/definitions/bilingual_text"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date",
+      "description": "When the rules data was last verified/updated"
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When these rules took effect"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When these rules are next expected to change"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "suspended", "discontinued", "proposed"]
+    },
+    "source_urls": {
+      "$ref": "#/definitions/bilingual_text",
+      "description": "Canonical Canada.ca URLs for this program"
+    },
+    "legislation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "$ref": "#/definitions/bilingual_text" },
+          "url": { "$ref": "#/definitions/bilingual_text" }
+        }
+      }
+    },
+
+    "eligibility": {
+      "type": "object",
+      "description": "Eligibility rules as structured decision logic",
+      "required": ["criteria"],
+      "properties": {
+        "summary": { "$ref": "#/definitions/bilingual_text" },
+        "criteria": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/eligibility_criterion" }
+        },
+        "decision_table": {
+          "$ref": "#/definitions/decision_table",
+          "description": "Machine-readable eligibility decision table"
+        }
+      }
+    },
+
+    "amounts": {
+      "type": "object",
+      "description": "Benefit amounts and calculation rules",
+      "required": ["currency", "payment_frequency"],
+      "properties": {
+        "currency": { "type": "string", "default": "CAD" },
+        "payment_frequency": {
+          "type": "string",
+          "enum": ["monthly", "bi-weekly", "weekly", "annual", "one-time", "varies"]
+        },
+        "summary": { "$ref": "#/definitions/bilingual_text" },
+        "parameters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/amount_parameter" },
+          "description": "Named parameters used in calculation (thresholds, rates, maximums)"
+        },
+        "calculation_rules": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/calculation_rule" },
+          "description": "Decision table rows for computing benefit amounts"
+        },
+        "examples": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/calculation_example" },
+          "description": "Worked examples showing inputs → output amounts"
+        }
+      }
+    },
+
+    "how_to_apply": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["method", "description"],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["online", "mail", "in-person", "phone", "birth-registration"]
+              },
+              "description": { "$ref": "#/definitions/bilingual_text" },
+              "url": { "$ref": "#/definitions/bilingual_text" },
+              "steps": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/bilingual_text" }
+              }
+            }
+          }
+        },
+        "required_documents": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/bilingual_text" }
+        }
+      }
+    },
+
+    "fees": {
+      "type": "object",
+      "properties": {
+        "has_fees": { "type": "boolean" },
+        "details": { "$ref": "#/definitions/bilingual_text" }
+      }
+    },
+
+    "processing_time": {
+      "type": "object",
+      "properties": {
+        "standard_days": { "type": "integer" },
+        "details": { "$ref": "#/definitions/bilingual_text" }
+      }
+    },
+
+    "contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["phone", "online", "mail"] },
+          "description": { "$ref": "#/definitions/bilingual_text" },
+          "value": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "bilingual_text": {
+      "type": "object",
+      "required": ["en", "fr"],
+      "properties": {
+        "en": { "type": "string" },
+        "fr": { "type": "string" }
+      }
+    },
+
+    "eligibility_criterion": {
+      "type": "object",
+      "required": ["id", "description", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Machine-readable criterion ID"
+        },
+        "description": { "$ref": "#/definitions/bilingual_text" },
+        "type": {
+          "type": "string",
+          "enum": ["boolean", "numeric_threshold", "categorical", "age_range", "residency", "composite"],
+          "description": "Type of check"
+        },
+        "field": {
+          "type": "string",
+          "description": "Input variable name (e.g., 'applicant_age', 'family_net_income')"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["eq", "neq", "lt", "lte", "gt", "gte", "in", "between", "all_of", "any_of"]
+        },
+        "value": {
+          "description": "Threshold value, list of accepted values, or range [min, max]"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true
+        },
+        "sub_criteria": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/eligibility_criterion" },
+          "description": "For composite criteria (any_of / all_of)"
+        }
+      }
+    },
+
+    "decision_table": {
+      "type": "object",
+      "description": "A full decision table: given inputs, evaluate conditions, produce an outcome",
+      "required": ["inputs", "rules", "default_outcome"],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "type"],
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "$ref": "#/definitions/bilingual_text" },
+              "type": { "type": "string", "enum": ["boolean", "number", "string", "date"] }
+            }
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["conditions", "outcome"],
+            "properties": {
+              "conditions": {
+                "type": "object",
+                "description": "Map of input_id → condition object {operator, value}"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": ["eligible", "not_eligible", "may_be_eligible", "refer"]
+              },
+              "note": { "$ref": "#/definitions/bilingual_text" }
+            }
+          }
+        },
+        "default_outcome": {
+          "type": "string",
+          "enum": ["eligible", "not_eligible", "may_be_eligible", "refer"]
+        }
+      }
+    },
+
+    "amount_parameter": {
+      "type": "object",
+      "required": ["id", "label", "value"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Machine-readable parameter name"
+        },
+        "label": { "$ref": "#/definitions/bilingual_text" },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["dollars", "percent", "weeks", "hours", "days"]
+        },
+        "effective_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "notes": { "$ref": "#/definitions/bilingual_text" }
+      }
+    },
+
+    "calculation_rule": {
+      "type": "object",
+      "description": "One row of a benefit calculation decision table",
+      "required": ["conditions", "formula"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "$ref": "#/definitions/bilingual_text" },
+        "conditions": {
+          "type": "object",
+          "description": "Map of variable → condition {operator, value}"
+        },
+        "formula": {
+          "type": "object",
+          "description": "How to compute the amount for this row",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["fixed", "percentage", "tiered", "lookup", "formula"]
+            },
+            "value": { "type": "number" },
+            "rate": { "type": "number" },
+            "base": { "type": "string", "description": "Variable name to apply rate to" },
+            "max": { "type": "number" },
+            "min": { "type": "number" },
+            "expression": {
+              "type": "string",
+              "description": "For type=formula, a human+machine readable expression"
+            }
+          }
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "annual": { "type": "number" },
+            "monthly": { "type": "number" },
+            "weekly": { "type": "number" }
+          }
+        }
+      }
+    },
+
+    "calculation_example": {
+      "type": "object",
+      "required": ["scenario", "inputs", "result"],
+      "properties": {
+        "scenario": { "$ref": "#/definitions/bilingual_text" },
+        "inputs": {
+          "type": "object",
+          "description": "Map of variable name → value"
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "annual": { "type": "number" },
+            "monthly": { "type": "number" },
+            "weekly": { "type": "number" },
+            "explanation": { "$ref": "#/definitions/bilingual_text" }
+          }
+        }
+      }
+    }
+  }
+}

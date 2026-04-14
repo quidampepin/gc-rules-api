@@ -1,0 +1,13 @@
+title: GC Rules API — Static Site Experiment
+description: Canada.ca pages generated from structured program rules data.
+baseurl: ""
+url: ""
+
+# Don't process the API files
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+
+# Keep data files accessible
+data_dir: _data

@@ -1,0 +1,238 @@
+{
+  "id": "old-age-security",
+  "name": {
+    "en": "Old Age Security",
+    "fr": "Sécurité de la vieillesse"
+  },
+  "administered_by": {
+    "id": "employment-social-development-canada",
+    "name": {
+      "en": "Employment and Social Development Canada",
+      "fr": "Emploi et Développement social Canada"
+    }
+  },
+  "description": {
+    "en": "A monthly payment for people aged 65 and older who meet Canadian legal status and residence requirements.",
+    "fr": "Un paiement mensuel pour les personnes âgées de 65 ans et plus qui satisfont aux exigences relatives au statut juridique et à la résidence au Canada."
+  },
+  "last_updated": "2026-04-07",
+  "effective_date": "2024-01-01",
+  "next_review_date": "2025-01-01",
+  "status": "active",
+  "source_urls": {
+    "en": "https://www.canada.ca/en/services/benefits/publicpensions/cpp/old-age-security.html",
+    "fr": "https://www.canada.ca/fr/services/prestations/pensionspubliques/rpc/securite-vieillesse.html"
+  },
+  "legislation": [
+    {
+      "name": { "en": "Old Age Security Act", "fr": "Loi sur la sécurité de la vieillesse" },
+      "url": {
+        "en": "https://laws-lois.justice.gc.ca/eng/acts/O-9/",
+        "fr": "https://laws-lois.justice.gc.ca/fra/lois/O-9/"
+      }
+    }
+  ],
+
+  "eligibility": {
+    "summary": {
+      "en": "You must be 65 or older, a Canadian citizen or legal resident, and have lived in Canada for at least 10 years after age 18.",
+      "fr": "Vous devez avoir 65 ans ou plus, être citoyen canadien ou résident légal, et avoir vécu au Canada pendant au moins 10 ans après l'âge de 18 ans."
+    },
+    "criteria": [
+      {
+        "id": "age_65_plus",
+        "description": { "en": "65 years of age or older", "fr": "Âgé de 65 ans ou plus" },
+        "type": "age_range",
+        "field": "applicant_age",
+        "operator": "gte",
+        "value": "$param:min_age",
+        "required": true
+      },
+      {
+        "id": "legal_status",
+        "description": {
+          "en": "Canadian citizen or legal resident at the time the OAS pension is approved",
+          "fr": "Citoyen canadien ou résident légal au moment de l'approbation de la pension de la SV"
+        },
+        "type": "categorical",
+        "field": "legal_status",
+        "operator": "in",
+        "value": ["canadian_citizen", "legal_resident"],
+        "required": true
+      },
+      {
+        "id": "residence_minimum",
+        "description": {
+          "en": "Have lived in Canada for at least 10 years since age 18 (for pension in Canada)",
+          "fr": "Avoir vécu au Canada pendant au moins 10 ans depuis l'âge de 18 ans (pour pension au Canada)"
+        },
+        "type": "numeric_threshold",
+        "field": "years_residence_after_18",
+        "operator": "gte",
+        "value": "$param:min_years_residence",
+        "required": true
+      }
+    ],
+    "decision_table": {
+      "inputs": [
+        { "id": "applicant_age", "label": { "en": "Applicant's age", "fr": "Âge du demandeur" }, "type": "number" },
+        { "id": "legal_status", "label": { "en": "Legal status", "fr": "Statut juridique" }, "type": "string" },
+        { "id": "years_residence_after_18", "label": { "en": "Years lived in Canada after age 18", "fr": "Années vécues au Canada après 18 ans" }, "type": "number" }
+      ],
+      "rules": [
+        {
+          "conditions": { "applicant_age": { "operator": "lt", "value": "$param:min_age" } },
+          "outcome": "not_eligible",
+          "note": { "en": "Must be 65 or older", "fr": "Doit avoir 65 ans ou plus" }
+        },
+        {
+          "conditions": { "legal_status": { "operator": "in", "value": ["not_resident", "visitor"] } },
+          "outcome": "not_eligible"
+        },
+        {
+          "conditions": { "years_residence_after_18": { "operator": "lt", "value": "$param:min_years_residence" } },
+          "outcome": "not_eligible",
+          "note": { "en": "Minimum 10 years of residence required (unless covered by a social security agreement)", "fr": "Minimum 10 ans de résidence requis (sauf si couvert par un accord de sécurité sociale)" }
+        },
+        {
+          "conditions": {
+            "applicant_age": { "operator": "gte", "value": "$param:min_age" },
+            "legal_status": { "operator": "in", "value": ["canadian_citizen", "legal_resident"] },
+            "years_residence_after_18": { "operator": "gte", "value": "$param:full_pension_years" }
+          },
+          "outcome": "eligible",
+          "note": { "en": "Full pension: 40+ years of residence", "fr": "Pension complète : 40 ans de résidence ou plus" }
+        },
+        {
+          "conditions": {
+            "applicant_age": { "operator": "gte", "value": "$param:min_age" },
+            "legal_status": { "operator": "in", "value": ["canadian_citizen", "legal_resident"] },
+            "years_residence_after_18": { "operator": "between", "value": ["$param:min_years_residence", "$param:full_pension_years_minus_1"] }
+          },
+          "outcome": "eligible",
+          "note": { "en": "Partial pension: 10-39 years of residence", "fr": "Pension partielle : 10 à 39 ans de résidence" }
+        }
+      ],
+      "default_outcome": "refer"
+    }
+  },
+
+  "amounts": {
+    "currency": "CAD",
+    "payment_frequency": "monthly",
+    "summary": {
+      "en": "The amount depends on how long you lived in Canada after age 18, your age, and your income.",
+      "fr": "Le montant dépend de la durée de votre résidence au Canada après l'âge de 18 ans, de votre âge et de votre revenu."
+    },
+    "parameters": [
+      { "id": "min_age", "label": { "en": "Minimum eligible age", "fr": "Âge minimum admissible" }, "value": 65, "unit": "years" },
+      { "id": "senior_age_cutoff", "label": { "en": "Age threshold for 10% increase", "fr": "Seuil d'âge pour l'augmentation de 10 %" }, "value": 75, "unit": "years" },
+      { "id": "senior_age_increase", "label": { "en": "Benefit increase for 75+", "fr": "Augmentation de la prestation pour 75 ans et plus" }, "value": 10, "unit": "percent" },
+      { "id": "max_monthly_65_to_74", "label": { "en": "Maximum monthly OAS pension (age 65-74)", "fr": "Pension mensuelle maximale de la SV (65-74 ans)" }, "value": 713.34, "unit": "dollars", "effective_date": "2024-01-01", "notes": { "en": "Indexed quarterly to the Consumer Price Index", "fr": "Indexée trimestriellement selon l'Indice des prix à la consommation" } },
+      { "id": "max_monthly_75_plus", "label": { "en": "Maximum monthly OAS pension (age 75+)", "fr": "Pension mensuelle maximale de la SV (75 ans et plus)" }, "value": 784.67, "unit": "dollars", "effective_date": "2024-01-01" },
+      { "id": "full_pension_years", "label": { "en": "Years of residence for full pension", "fr": "Années de résidence pour pension complète" }, "value": 40, "unit": "years" },
+      { "id": "full_pension_years_minus_1", "label": { "en": "Max years for partial pension", "fr": "Maximum d'années pour pension partielle" }, "value": 39, "unit": "years" },
+      { "id": "min_years_residence", "label": { "en": "Minimum years of residence for any pension", "fr": "Années minimales de résidence pour toute pension" }, "value": 10, "unit": "years" },
+      { "id": "clawback_threshold", "label": { "en": "Recovery tax (clawback) income threshold", "fr": "Seuil de revenu de l'impôt de récupération" }, "value": 86912, "unit": "dollars", "effective_date": "2024-01-01" },
+      { "id": "clawback_rate", "label": { "en": "Recovery tax rate", "fr": "Taux de l'impôt de récupération" }, "value": 15, "unit": "percent" },
+      { "id": "deferral_rate_per_month", "label": { "en": "Increase per month of deferral (after age 65)", "fr": "Augmentation par mois de report (après 65 ans)" }, "value": 0.6, "unit": "percent" },
+      { "id": "max_deferral_months", "label": { "en": "Maximum deferral period", "fr": "Période maximale de report" }, "value": 60, "unit": "months" },
+      { "id": "max_deferral_increase", "label": { "en": "Maximum deferral increase (at age 70)", "fr": "Augmentation maximale par report (à 70 ans)" }, "value": 36, "unit": "percent" }
+    ],
+
+    "calculation": {
+      "description": {
+        "en": "1. Determine base pension by age bracket. 2. Prorate if less than $param:full_pension_years years of residence. 3. Apply clawback if income exceeds $param:clawback_threshold.",
+        "fr": "1. Déterminer la pension de base selon la tranche d'âge. 2. Calculer au prorata si moins de $param:full_pension_years ans de résidence. 3. Appliquer la récupération si le revenu dépasse $param:clawback_threshold."
+      },
+      "step_1_base_pension": {
+        "description": { "en": "Maximum monthly pension by age group", "fr": "Pension mensuelle maximale selon le groupe d'âge" },
+        "rules": [
+          { "condition": "applicant_age < $param:senior_age_cutoff", "monthly_amount": "$param:max_monthly_65_to_74" },
+          { "condition": "applicant_age >= $param:senior_age_cutoff", "monthly_amount": "$param:max_monthly_75_plus" }
+        ]
+      },
+      "step_2_proration": {
+        "formula": "base_pension * (years_residence_after_18 / $param:full_pension_years)",
+        "note": { "en": "Capped at 1.0 (40+ years = full pension)", "fr": "Plafonné à 1,0 (40 ans ou plus = pension complète)" }
+      },
+      "step_3_clawback": {
+        "condition": "individual_net_income > $param:clawback_threshold",
+        "formula": "prorated_pension - ($param:clawback_rate / 100) * (individual_net_income - $param:clawback_threshold) / 12",
+        "note": { "en": "Minimum pension is $0 (fully clawed back at high incomes)", "fr": "La pension minimale est de 0 $ (entièrement récupérée à revenus élevés)" }
+      },
+      "optional_deferral": {
+        "description": {
+          "en": "You can defer OAS up to $param:max_deferral_months months past age $param:min_age. Each month increases your pension by $param:deferral_rate_per_month%, up to $param:max_deferral_increase% at age 70.",
+          "fr": "Vous pouvez reporter la SV jusqu'à $param:max_deferral_months mois après $param:min_age ans. Chaque mois augmente votre pension de $param:deferral_rate_per_month %, jusqu'à $param:max_deferral_increase % à 70 ans."
+        }
+      }
+    },
+
+    "examples": [
+      {
+        "scenario": { "en": "Person aged 67, lived in Canada 40 years, income $50,000", "fr": "Personne de 67 ans, ayant vécu au Canada 40 ans, revenu de 50 000 $" },
+        "inputs": { "applicant_age": 67, "years_residence_after_18": 40, "individual_net_income": 50000 },
+        "result": {
+          "monthly": 713.34,
+          "explanation": {
+            "en": "Full pension ($param:max_monthly_65_to_74). $param:full_pension_years+ years of residence. Income below clawback threshold of $param:clawback_threshold.",
+            "fr": "Pension complète ($param:max_monthly_65_to_74). $param:full_pension_years+ ans de résidence. Revenu sous le seuil de récupération de $param:clawback_threshold."
+          }
+        }
+      },
+      {
+        "scenario": { "en": "Person aged 68, lived in Canada 25 years, income $40,000", "fr": "Personne de 68 ans, ayant vécu au Canada 25 ans, revenu de 40 000 $" },
+        "inputs": { "applicant_age": 68, "years_residence_after_18": 25, "individual_net_income": 40000 },
+        "result": {
+          "monthly": 445.84,
+          "explanation": {
+            "en": "Partial pension: $param:max_monthly_65_to_74 × (25 / $param:full_pension_years) = $445.84/month. Income below clawback threshold.",
+            "fr": "Pension partielle : $param:max_monthly_65_to_74 × (25 / $param:full_pension_years) = 445,84 $/mois. Revenu sous le seuil de récupération."
+          }
+        }
+      }
+    ]
+  },
+
+  "how_to_apply": {
+    "channels": [
+      {
+        "method": "online",
+        "description": { "en": "Apply through My Service Canada Account", "fr": "Faites une demande via Mon dossier Service Canada" },
+        "url": {
+          "en": "https://www.canada.ca/en/employment-social-development/services/my-account.html",
+          "fr": "https://www.canada.ca/fr/emploi-developpement-social/services/mon-dossier.html"
+        }
+      },
+      {
+        "method": "mail",
+        "description": {
+          "en": "Complete and mail Form ISP-3550 (Application for the Old Age Security Pension)",
+          "fr": "Remplissez et envoyez le formulaire ISP-3550 (Demande de pension de la Sécurité de la vieillesse)"
+        }
+      }
+    ],
+    "required_documents": [
+      { "en": "Social Insurance Number (SIN)", "fr": "Numéro d'assurance sociale (NAS)" },
+      { "en": "Proof of Canadian citizenship or legal residence", "fr": "Preuve de citoyenneté canadienne ou de résidence légale" },
+      { "en": "Proof of residence in Canada (if required)", "fr": "Preuve de résidence au Canada (si requise)" }
+    ]
+  },
+
+  "fees": {
+    "has_fees": false,
+    "details": {
+      "en": "There is no fee to apply for or receive Old Age Security.",
+      "fr": "Il n'y a aucun frais pour demander ou recevoir la Sécurité de la vieillesse."
+    }
+  },
+
+  "processing_time": {
+    "standard_days": 120,
+    "details": {
+      "en": "Apply 6 months before you want your pension to begin. Some applicants may be automatically enrolled.",
+      "fr": "Faites votre demande 6 mois avant la date à laquelle vous souhaitez que votre pension commence. Certains demandeurs peuvent être inscrits automatiquement."
+    }
+  }
+}

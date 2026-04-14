@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html class="no-js" lang="{{ page.lang | default: 'en' }}" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>{{ page.title }} - Canada.ca</title>
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/theme.min.css">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/messages.min.css">
+<noscript><link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/css/noscript.min.css"></noscript>
+</head>
+<body vocab="http://schema.org/" typeof="WebPage">
+<nav>
+<ul id="wb-tphp">
+<li class="wb-slc"><a class="wb-sl" href="#wb-cont">Skip to main content</a></li>
+</ul>
+</nav>
+<header>
+<div id="wb-bnr" class="container">
+<div class="row">
+<section id="wb-lng" class="col-xs-3 col-sm-12 pull-right text-right">
+<h2 class="wb-inv">Language selection</h2>
+<ul class="list-inline mrgn-bttm-0">
+{% if page.lang == 'fr' %}
+<li><a lang="en" hreflang="en" href="{{ page.other_lang_url | default: '#' }}"><span class="hidden-xs">English</span><abbr title="English" class="visible-xs h3 mrgn-tp-sm mrgn-bttm-0 text-uppercase">en</abbr></a></li>
+{% else %}
+<li><a lang="fr" hreflang="fr" href="{{ page.other_lang_url | default: '#' }}"><span class="hidden-xs">Français</span><abbr title="Français" class="visible-xs h3 mrgn-tp-sm mrgn-bttm-0 text-uppercase">fr</abbr></a></li>
+{% endif %}
+</ul>
+</section>
+<div class="brand col-xs-9 col-sm-5 col-md-4" property="publisher" typeof="GovernmentOrganization">
+<a href="https://www.canada.ca/{{ page.lang | default: 'en' }}.html" property="url">
+<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/sig-blk-{{ page.lang | default: 'en' }}.svg" alt="{% if page.lang == 'fr' %}Gouvernement du Canada{% else %}Government of Canada{% endif %}" property="logo">
+</a>
+</div>
+</div>
+</div>
+<nav id="wb-bc" property="breadcrumb">
+<h2>{% if page.lang == 'fr' %}Vous êtes ici :{% else %}You are here:{% endif %}</h2>
+<div class="container">
+<ol class="breadcrumb">
+{% for crumb in page.breadcrumbs %}
+<li><a href="{{ crumb.url }}">{{ crumb.title }}</a></li>
+{% endfor %}
+</ol>
+</div>
+</nav>
+</header>
+<main property="mainContentOfPage" class="container" typeof="WebPageElement">
+
+<div class="alert alert-info mrgn-bttm-lg">
+<p><strong>Experiment:</strong> This page was generated from structured data in <code>_data/programs/canada-child-benefit.json</code>. Every amount, threshold, and rate on this page comes from the JSON file — not hardcoded HTML.</p>
+</div>
+
+{{ content }}
+
+<div class="pagedetails mrgn-tp-lg">
+<dl id="wb-dtmd">
+<dt>{% if page.lang == 'fr' %}Date de modification :{% else %}Date modified:{% endif %}</dt>
+<dd><time property="dateModified">{{ page.date_modified | default: site.time | date: "%Y-%m-%d" }}</time></dd>
+</dl>
+</div>
+</main>
+<footer id="wb-info">
+<div class="landscape">
+<nav class="container wb-navcurr">
+<h2 class="wb-inv">{% if page.lang == 'fr' %}Au sujet du gouvernement{% else %}About government{% endif %}</h2>
+</nav>
+</div>
+<div class="brand">
+<div class="container">
+<div class="row">
+<nav class="col-md-10 ftr-urlt-lnk">
+</nav>
+<div class="col-xs-6 visible-sm visible-xs tofpg">
+<a href="#wb-cont">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a>
+</div>
+<div class="col-xs-6 col-md-2 text-right">
+<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/wmms-blk.svg" alt="{% if page.lang == 'fr' %}Symbole du gouvernement du Canada{% else %}Symbol of the Government of Canada{% endif %}">
+</div>
+</div>
+</div>
+</div>
+</footer>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/js/wet-boew.min.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/js/theme.min.js"></script>
+</body>
+</html>

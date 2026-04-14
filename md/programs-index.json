@@ -1,0 +1,85 @@
+{
+  "canada-child-benefit": {
+    "name": {
+      "en": "Canada Child Benefit",
+      "fr": "Allocation canadienne pour enfants"
+    },
+    "keywords": [
+      "afni",
+      "allocation",
+      "benefit",
+      "canada",
+      "canadienne",
+      "ccb",
+      "child",
+      "child benefit",
+      "children",
+      "custody",
+      "enfants",
+      "family income",
+      "pour"
+    ],
+    "topics": [
+      "family",
+      "children",
+      "tax-free benefit",
+      "monthly payment"
+    ],
+    "file": "canada-child-benefit.md"
+  },
+  "employment-insurance": {
+    "name": {
+      "en": "Employment Insurance - Regular Benefits",
+      "fr": "Assurance-emploi - Prestations régulières"
+    },
+    "keywords": [
+      "assurance-emploi",
+      "benefits",
+      "ei",
+      "employment",
+      "insurance",
+      "job loss",
+      "maternity",
+      "parental",
+      "prestations",
+      "regular",
+      "roe",
+      "régulières",
+      "sickness",
+      "unemployment"
+    ],
+    "topics": [
+      "employment",
+      "job loss",
+      "temporary income",
+      "workers"
+    ],
+    "file": "employment-insurance.md"
+  },
+  "old-age-security": {
+    "name": {
+      "en": "Old Age Security",
+      "fr": "Sécurité de la vieillesse"
+    },
+    "keywords": [
+      "gis",
+      "oas",
+      "old age",
+      "old-age",
+      "pension",
+      "retirement",
+      "security",
+      "senior",
+      "seniors",
+      "sécurité",
+      "vieillesse"
+    ],
+    "topics": [
+      "retirement",
+      "seniors",
+      "pension",
+      "aging"
+    ],
+    "file": "old-age-security.md"
+  }
+}

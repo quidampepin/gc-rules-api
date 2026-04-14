@@ -1,0 +1,194 @@
+---
+layout: gcweb
+title: "How much you can get"
+lang: en
+other_lang_url: "/fr/allocation-canadienne-pour-enfants/combien.html"
+date_modified: "2026-04-07"
+breadcrumbs:
+  - title: "Canada.ca"
+    url: "https://www.canada.ca/en.html"
+  - title: "Benefits"
+    url: "https://www.canada.ca/en/services/benefits.html"
+  - title: "Canada child benefit"
+    url: "/en/canada-child-benefit/"
+---
+
+{% assign ccb = site.data.programs["canada-child-benefit"] %}
+{% assign params = ccb.amounts.parameters %}
+
+{% comment %}
+  Build a lookup hash so we can write params["income_threshold_1"] instead
+  of looping every time. Jekyll/Liquid doesn't have a native "find" filter,
+  so we assign each param we need individually.
+{% endcomment %}
+{% for p in params %}
+  {% case p.id %}
+    {% when 'max_annual_under_6' %}{% assign max_annual_under_6 = p.value %}
+    {% when 'max_annual_6_to_17' %}{% assign max_annual_6_to_17 = p.value %}
+    {% when 'young_child_age_cutoff' %}{% assign young_child_age_cutoff = p.value %}
+    {% when 'child_max_age' %}{% assign child_max_age = p.value %}
+    {% when 'income_threshold_1' %}{% assign income_threshold_1 = p.value %}
+    {% when 'income_threshold_2' %}{% assign income_threshold_2 = p.value %}
+  {% endcase %}
+{% endfor %}
+
+{% comment %} Compute monthly values (Jekyll doesn't do float division well, so we use divided_by with a float) {% endcomment %}
+{% assign max_monthly_under_6 = max_annual_under_6 | divided_by: 12.0 | round: 2 %}
+{% assign max_monthly_6_to_17 = max_annual_6_to_17 | divided_by: 12.0 | round: 2 %}
+
+{% assign reduction_table = ccb.amounts.calculation.step_2_income_reduction.reduction_table %}
+
+<nav class="provisional gc-subway">
+  <h1 id="gc-document-nav">{{ ccb.name.en }}</h1>
+  <ul>
+    <li>
+      <a href="/en/canada-child-benefit/" class="hidden-xs hidden-sm">Overview</a>
+      <a href="/en/canada-child-benefit/#gc-document-nav" class="visible-xs visible-sm">Overview</a>
+    </li>
+    <li>
+      <a href="/en/canada-child-benefit/who-can-apply.html" class="hidden-xs hidden-sm">Who can apply</a>
+      <a href="/en/canada-child-benefit/who-can-apply.html#gc-document-nav" class="visible-xs visible-sm">Who can apply</a>
+    </li>
+    <li>
+      <a href="/en/canada-child-benefit/apply.html" class="hidden-xs hidden-sm">Apply</a>
+      <a href="/en/canada-child-benefit/apply.html#gc-document-nav" class="visible-xs visible-sm">Apply</a>
+    </li>
+    <li>
+      <a href="#" class="active" aria-current="page">How much you can get</a>
+    </li>
+    <li>
+      <a href="/en/canada-child-benefit/payment-dates.html" class="hidden-xs hidden-sm">Payment dates</a>
+      <a href="/en/canada-child-benefit/payment-dates.html#gc-document-nav" class="visible-xs visible-sm">Payment dates</a>
+    </li>
+  </ul>
+</nav>
+
+<h1 property="name" id="wb-cont" class="gc-thickline">How much you can get</h1>
+
+<p>{{ ccb.amounts.summary.en }}</p>
+
+<h2>On this page</h2>
+<ul>
+  <li><a href="#maximum">Maximum amounts per child</a></li>
+  <li><a href="#reduction">How your income affects your payments</a></li>
+  <li><a href="#examples">Calculation examples</a></li>
+</ul>
+
+<h2 id="maximum">Maximum amounts per child</h2>
+
+<p>If your adjusted family net income (AFNI) is under <strong>${{ income_threshold_1 | round: 0 }}</strong>, you get the maximum amount for each child.</p>
+
+<table class="table table-bordered table-condensed">
+  <caption>Maximum {{ ccb.name.en }} amounts per child</caption>
+  <thead>
+    <tr>
+      <th scope="col">Age of child</th>
+      <th scope="col">Maximum annual benefit</th>
+      <th scope="col">Maximum monthly benefit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Under {{ young_child_age_cutoff }} years of age</td>
+      <td>${{ max_annual_under_6 | round: 0 }} per year</td>
+      <td>${{ max_monthly_under_6 }} per month</td>
+    </tr>
+    <tr>
+      <td>{{ young_child_age_cutoff }} to 17 years of age</td>
+      <td>${{ max_annual_6_to_17 | round: 0 }} per year</td>
+      <td>${{ max_monthly_6_to_17 }} per month</td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="mrgn-tp-md"><small>Effective date: {{ ccb.effective_date }}. Source: <code>_data/programs/canada-child-benefit.json</code></small></p>
+
+<h2 id="reduction">How your income affects your payments</h2>
+
+<p>The payments gradually start decreasing when the AFNI is over <strong>${{ income_threshold_1 | round: 0 }}</strong>. The reduction depends on your AFNI and on the number of children you have.</p>
+
+<h3>Income below ${{ income_threshold_1 | round: 0 }}</h3>
+<p>You receive the maximum amount for each child. No reduction is applied.</p>
+
+<h3>Income between ${{ income_threshold_1 | round: 0 }} and ${{ income_threshold_2 | round: 0 }}</h3>
+
+<p>Your total payment is reduced based on the number of qualifying children:</p>
+
+<table class="table table-bordered table-condensed">
+  <caption>Reduction rates for AFNI between ${{ income_threshold_1 | round: 0 }} and ${{ income_threshold_2 | round: 0 }}</caption>
+  <thead>
+    <tr>
+      <th scope="col">Number of children</th>
+      <th scope="col">Reduction rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tier in reduction_table %}
+    <tr>
+      <td>{{ tier.num_children }} {% if tier.num_children == "4+" %}or more{% endif %}</td>
+      <td>{{ tier.rate_mid | times: 100 }}%</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p>Your reduction is calculated as: <strong>rate &times; (your AFNI &minus; ${{ income_threshold_1 | round: 0 }})</strong></p>
+
+<h3>Income above ${{ income_threshold_2 | round: 0 }}</h3>
+
+<p>Your total payment is reduced further. The reduction has two parts: a base amount plus a percentage of income above ${{ income_threshold_2 | round: 0 }}.</p>
+
+<table class="table table-bordered table-condensed">
+  <caption>Reduction rates for AFNI above ${{ income_threshold_2 | round: 0 }}</caption>
+  <thead>
+    <tr>
+      <th scope="col">Number of children</th>
+      <th scope="col">Base reduction</th>
+      <th scope="col">Additional rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tier in reduction_table %}
+    <tr>
+      <td>{{ tier.num_children }} {% if tier.num_children == "4+" %}or more{% endif %}</td>
+      <td>${{ tier.base_reduction }}</td>
+      <td>{{ tier.rate_high | times: 100 }}%</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p>Your reduction is calculated as: <strong>base reduction + rate &times; (your AFNI &minus; ${{ income_threshold_2 | round: 0 }})</strong></p>
+
+<h2 id="examples">Calculation examples</h2>
+
+{% for example in ccb.amounts.examples %}
+<details class="mrgn-bttm-md">
+  <summary>{{ example.scenario.en }}</summary>
+  <p><strong>Inputs:</strong></p>
+  <ul>
+    <li>Number of children: {{ example.inputs.num_children }}</li>
+    {% for child in example.inputs.children %}
+    <li>Child {{ forloop.index }} age: {{ child.age }}</li>
+    {% endfor %}
+    <li>Family net income: ${{ example.inputs.family_net_income }}</li>
+  </ul>
+  <p><strong>Estimated annual benefit: ${{ example.result.annual }}</strong></p>
+  <p>{{ example.result.explanation.en }}</p>
+</details>
+{% endfor %}
+
+<h2>Related information</h2>
+<ul>
+  <li><a href="{{ ccb.source_urls.en }}">{{ ccb.name.en }} on Canada.ca</a></li>
+  {% for law in ccb.legislation %}
+  <li><a href="{{ law.url.en }}">{{ law.name.en }}</a></li>
+  {% endfor %}
+</ul>
+
+<nav class="mrgn-bttm-lg mrgn-tp-lg">
+  <h3 class="wb-inv">Document navigation</h3>
+  <ul class="pager">
+    <li class="next"><a href="/en/canada-child-benefit/payment-dates.html" rel="next"><span class="wb-inv">Next: </span>Payment dates</a></li>
+  </ul>
+</nav>

@@ -1,0 +1,391 @@
+{
+  "id": "canada-child-benefit",
+  "name": {
+    "en": "Canada Child Benefit",
+    "fr": "Allocation canadienne pour enfants"
+  },
+  "administered_by": {
+    "id": "canada-revenue-agency",
+    "name": {
+      "en": "Canada Revenue Agency",
+      "fr": "Agence du revenu du Canada"
+    }
+  },
+  "description": {
+    "en": "A tax-free monthly payment to eligible families to help with the cost of raising children under 18 years of age.",
+    "fr": "Un paiement mensuel non imposable versé aux familles admissibles pour les aider à subvenir aux besoins de leurs enfants de moins de 18 ans."
+  },
+  "last_updated": "2026-04-08",
+  "effective_date": "2025-07-01",
+  "next_review_date": "2026-07-01",
+  "status": "active",
+  "source_urls": {
+    "en": "https://www.canada.ca/en/revenue-agency/services/child-family-benefits/canada-child-benefit-overview.html",
+    "fr": "https://www.canada.ca/fr/agence-revenu/services/prestations-enfants-familles/allocation-canadienne-enfants-apercu.html"
+  },
+  "legislation": [
+    {
+      "name": {
+        "en": "Income Tax Act, Section 122.6",
+        "fr": "Loi de l'impôt sur le revenu, article 122.6"
+      },
+      "url": {
+        "en": "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/page-99.html",
+        "fr": "https://laws-lois.justice.gc.ca/fra/lois/I-3.3/page-99.html"
+      }
+    }
+  ],
+
+  "eligibility": {
+    "summary": {
+      "en": "You must live with a child under 18, be primarily responsible for their care, and be a Canadian resident for tax purposes.",
+      "fr": "Vous devez vivre avec un enfant de moins de 18 ans, être le principal responsable de ses soins et être un résident du Canada aux fins de l'impôt."
+    },
+    "criteria": [
+      {
+        "id": "child_under_18",
+        "description": {
+          "en": "You live with a child who is under 18 years of age",
+          "fr": "Vous vivez avec un enfant âgé de moins de 18 ans"
+        },
+        "type": "age_range",
+        "field": "child_age",
+        "operator": "lt",
+        "value": "$param:child_max_age",
+        "required": true
+      },
+      {
+        "id": "primary_caregiver",
+        "description": {
+          "en": "You are primarily responsible for the care and upbringing of the child",
+          "fr": "Vous êtes le principal responsable des soins et de l'éducation de l'enfant"
+        },
+        "type": "boolean",
+        "field": "is_primary_caregiver",
+        "operator": "eq",
+        "value": true,
+        "required": true
+      },
+      {
+        "id": "canadian_resident",
+        "description": {
+          "en": "You are a resident of Canada for tax purposes",
+          "fr": "Vous êtes un résident du Canada aux fins de l'impôt"
+        },
+        "type": "boolean",
+        "field": "is_canadian_resident_tax",
+        "operator": "eq",
+        "value": true,
+        "required": true
+      },
+      {
+        "id": "status_requirement",
+        "description": {
+          "en": "You or your spouse/common-law partner must have qualifying immigration status",
+          "fr": "Vous ou votre époux/conjoint de fait devez avoir un statut d'immigration admissible"
+        },
+        "type": "categorical",
+        "field": "immigration_status",
+        "operator": "in",
+        "value": ["canadian_citizen", "permanent_resident", "protected_person", "temporary_resident_18m", "registered_indian_act"],
+        "required": true
+      }
+    ],
+    "decision_table": {
+      "inputs": [
+        { "id": "child_age", "label": { "en": "Child's age", "fr": "Âge de l'enfant" }, "type": "number" },
+        { "id": "is_primary_caregiver", "label": { "en": "Primary caregiver", "fr": "Responsable principal" }, "type": "boolean" },
+        { "id": "is_canadian_resident_tax", "label": { "en": "Canadian resident (tax)", "fr": "Résident canadien (impôt)" }, "type": "boolean" },
+        { "id": "immigration_status", "label": { "en": "Immigration status", "fr": "Statut d'immigration" }, "type": "string" }
+      ],
+      "rules": [
+        {
+          "conditions": {
+            "child_age": { "operator": "gte", "value": "$param:child_max_age" }
+          },
+          "outcome": "not_eligible",
+          "note": { "en": "Child must be under 18", "fr": "L'enfant doit avoir moins de 18 ans" }
+        },
+        {
+          "conditions": {
+            "is_primary_caregiver": { "operator": "eq", "value": false }
+          },
+          "outcome": "not_eligible",
+          "note": { "en": "Must be the primary caregiver", "fr": "Doit être le responsable principal" }
+        },
+        {
+          "conditions": {
+            "is_canadian_resident_tax": { "operator": "eq", "value": false }
+          },
+          "outcome": "not_eligible",
+          "note": { "en": "Must be a Canadian resident for tax purposes", "fr": "Doit être résident canadien aux fins de l'impôt" }
+        },
+        {
+          "conditions": {
+            "child_age": { "operator": "lt", "value": "$param:child_max_age" },
+            "is_primary_caregiver": { "operator": "eq", "value": true },
+            "is_canadian_resident_tax": { "operator": "eq", "value": true },
+            "immigration_status": { "operator": "in", "value": ["canadian_citizen", "permanent_resident", "protected_person", "temporary_resident_18m", "registered_indian_act"] }
+          },
+          "outcome": "eligible"
+        }
+      ],
+      "default_outcome": "refer"
+    }
+  },
+
+  "amounts": {
+    "currency": "CAD",
+    "payment_frequency": "monthly",
+    "summary": {
+      "en": "The amount depends on your adjusted family net income (AFNI), the number of children, and their ages.",
+      "fr": "Le montant dépend de votre revenu familial net rajusté (RFNR), du nombre d'enfants et de leur âge."
+    },
+    "parameters": [
+      {
+        "id": "child_max_age",
+        "label": { "en": "Maximum eligible age", "fr": "Âge maximum admissible" },
+        "value": 18,
+        "unit": "years",
+        "effective_date": "2025-07-01"
+      },
+      {
+        "id": "young_child_age_cutoff",
+        "label": { "en": "Age cutoff for higher benefit rate", "fr": "Âge limite pour le taux de prestation plus élevé" },
+        "value": 6,
+        "unit": "years",
+        "effective_date": "2025-07-01"
+      },
+      {
+        "id": "max_annual_under_6",
+        "label": { "en": "Maximum annual benefit per child under 6", "fr": "Prestation annuelle maximale par enfant de moins de 6 ans" },
+        "value": 7997,
+        "unit": "dollars",
+        "effective_date": "2025-07-01"
+      },
+      {
+        "id": "max_annual_6_to_17",
+        "label": { "en": "Maximum annual benefit per child aged 6 to 17", "fr": "Prestation annuelle maximale par enfant de 6 à 17 ans" },
+        "value": 6748,
+        "unit": "dollars",
+        "effective_date": "2025-07-01"
+      },
+      {
+        "id": "income_threshold_1",
+        "label": { "en": "First income threshold (no reduction below this)", "fr": "Premier seuil de revenu (aucune réduction sous ce seuil)" },
+        "value": 37487,
+        "unit": "dollars",
+        "effective_date": "2025-07-01"
+      },
+      {
+        "id": "income_threshold_2",
+        "label": { "en": "Second income threshold (higher reduction rate above this)", "fr": "Deuxième seuil de revenu (taux de réduction plus élevé au-dessus)" },
+        "value": 81222,
+        "unit": "dollars",
+        "effective_date": "2025-07-01"
+      }
+    ],
+
+    "calculation": {
+      "description": {
+        "en": "1. Sum the maximum annual benefit for each child based on age. 2. If family income exceeds the first threshold, reduce the total using the applicable rate from the reduction table.",
+        "fr": "1. Additionner la prestation annuelle maximale pour chaque enfant selon l'âge. 2. Si le revenu familial dépasse le premier seuil, réduire le total selon le taux applicable du tableau de réduction."
+      },
+      "step_1_max_benefit": {
+        "description": { "en": "Per-child maximum by age group", "fr": "Maximum par enfant selon le groupe d'âge" },
+        "rules": [
+          { "condition": "child_age < $param:young_child_age_cutoff", "annual_amount": "$param:max_annual_under_6" },
+          { "condition": "child_age >= $param:young_child_age_cutoff", "annual_amount": "$param:max_annual_6_to_17" }
+        ]
+      },
+      "step_2_income_reduction": {
+        "description": {
+          "en": "Reduction rates by number of children and income bracket. Applied to the total from step 1.",
+          "fr": "Taux de réduction selon le nombre d'enfants et la tranche de revenu. Appliqué au total de l'étape 1."
+        },
+        "brackets": [
+          {
+            "income_range": "income <= $param:income_threshold_1",
+            "reduction": "none"
+          },
+          {
+            "income_range": "$param:income_threshold_1 < income <= $param:income_threshold_2",
+            "formula": "total_max - rate_mid * (income - $param:income_threshold_1)"
+          },
+          {
+            "income_range": "income > $param:income_threshold_2",
+            "formula": "total_max - base_reduction - rate_high * (income - $param:income_threshold_2)"
+          }
+        ],
+        "reduction_table": [
+          { "num_children": 1, "rate_mid": 0.07,  "rate_high": 0.032, "base_reduction": 3061 },
+          { "num_children": 2, "rate_mid": 0.135, "rate_high": 0.057, "base_reduction": 5904 },
+          { "num_children": 3, "rate_mid": 0.19,  "rate_high": 0.08,  "base_reduction": 8310 },
+          { "num_children": "4+", "rate_mid": 0.23,  "rate_high": 0.095, "base_reduction": 10059 }
+        ]
+      }
+    },
+
+    "examples": [
+      {
+        "name": "Martha",
+        "scenario": { "en": "Martha: 1 child under 6, AFNI $45,000 (mid bracket)", "fr": "Martha : 1 enfant de moins de 6 ans, RFNR 45 000 $ (tranche intermédiaire)" },
+        "inputs": { "num_children": 1, "children": [{ "age": 4 }], "family_net_income": 45000 },
+        "result": {
+          "annual": 7471.09,
+          "monthly": 622.59,
+          "explanation": {
+            "en": "$45,000 - $param:income_threshold_1 = $7,513. Reduction: 7% × $7,513 = $525.91. Annual: $param:max_annual_under_6 - $525.91 = $7,471.09.",
+            "fr": "45 000 $ - $param:income_threshold_1 = 7 513 $. Réduction : 7 % × 7 513 $ = 525,91 $. Annuel : $param:max_annual_under_6 - 525,91 $ = 7 471,09 $."
+          }
+        }
+      },
+      {
+        "name": "Martha",
+        "scenario": { "en": "Martha: 1 child under 6, AFNI $100,000 (high bracket)", "fr": "Martha : 1 enfant de moins de 6 ans, RFNR 100 000 $ (tranche supérieure)" },
+        "inputs": { "num_children": 1, "children": [{ "age": 4 }], "family_net_income": 100000 },
+        "result": {
+          "annual": 4335.11,
+          "monthly": 361.25,
+          "explanation": {
+            "en": "$100,000 - $param:income_threshold_2 = $18,778. Partial: 3.2% × $18,778 = $600.89. Total reduction: $3,061 + $600.89 = $3,661.89. Annual: $param:max_annual_under_6 - $3,661.89 = $4,335.11.",
+            "fr": "100 000 $ - $param:income_threshold_2 = 18 778 $. Partiel : 3,2 % × 18 778 $ = 600,89 $. Réduction totale : 3 061 $ + 600,89 $ = 3 661,89 $. Annuel : $param:max_annual_under_6 - 3 661,89 $ = 4 335,11 $."
+          }
+        }
+      },
+      {
+        "name": "Fatima",
+        "scenario": { "en": "Fatima: 2 children under 6, AFNI $60,000 (mid bracket)", "fr": "Fatima : 2 enfants de moins de 6 ans, RFNR 60 000 $ (tranche intermédiaire)" },
+        "inputs": { "num_children": 2, "children": [{ "age": 3 }, { "age": 5 }], "family_net_income": 60000 },
+        "result": {
+          "annual": 12954.75,
+          "monthly": 1079.56,
+          "explanation": {
+            "en": "Max: $param:max_annual_under_6 × 2 = $15,994. $60,000 - $param:income_threshold_1 = $22,513. Reduction: 13.5% × $22,513 = $3,039.25. Annual: $15,994 - $3,039.25 = $12,954.75.",
+            "fr": "Max : $param:max_annual_under_6 × 2 = 15 994 $. 60 000 $ - $param:income_threshold_1 = 22 513 $. Réduction : 13,5 % × 22 513 $ = 3 039,25 $. Annuel : 15 994 $ - 3 039,25 $ = 12 954,75 $."
+          }
+        }
+      },
+      {
+        "name": "Fatima",
+        "scenario": { "en": "Fatima: 2 children under 6, AFNI $125,000 (high bracket)", "fr": "Fatima : 2 enfants de moins de 6 ans, RFNR 125 000 $ (tranche supérieure)" },
+        "inputs": { "num_children": 2, "children": [{ "age": 3 }, { "age": 5 }], "family_net_income": 125000 },
+        "result": {
+          "annual": 7594.66,
+          "monthly": 632.88,
+          "explanation": {
+            "en": "Max: $param:max_annual_under_6 × 2 = $15,994. $125,000 - $param:income_threshold_2 = $43,778. Partial: 5.7% × $43,778 = $2,495.34. Total reduction: $5,904 + $2,495.34 = $8,399.34. Annual: $15,994 - $8,399.34 = $7,594.66.",
+            "fr": "Max : $param:max_annual_under_6 × 2 = 15 994 $. 125 000 $ - $param:income_threshold_2 = 43 778 $. Partiel : 5,7 % × 43 778 $ = 2 495,34 $. Réduction totale : 5 904 $ + 2 495,34 $ = 8 399,34 $. Annuel : 15 994 $ - 8 399,34 $ = 7 594,66 $."
+          }
+        }
+      },
+      {
+        "name": "Julie",
+        "scenario": { "en": "Julie: 3 children over 6, AFNI $50,000 (mid bracket)", "fr": "Julie : 3 enfants de plus de 6 ans, RFNR 50 000 $ (tranche intermédiaire)" },
+        "inputs": { "num_children": 3, "children": [{ "age": 8 }, { "age": 10 }, { "age": 14 }], "family_net_income": 50000 },
+        "result": {
+          "annual": 17866.53,
+          "monthly": 1488.87,
+          "explanation": {
+            "en": "Max: $param:max_annual_6_to_17 × 3 = $20,244. $50,000 - $param:income_threshold_1 = $12,513. Reduction: 19% × $12,513 = $2,377.47. Annual: $20,244 - $2,377.47 = $17,866.53.",
+            "fr": "Max : $param:max_annual_6_to_17 × 3 = 20 244 $. 50 000 $ - $param:income_threshold_1 = 12 513 $. Réduction : 19 % × 12 513 $ = 2 377,47 $. Annuel : 20 244 $ - 2 377,47 $ = 17 866,53 $."
+          }
+        }
+      },
+      {
+        "name": "Julie",
+        "scenario": { "en": "Julie: 3 children over 6, AFNI $150,000 (high bracket)", "fr": "Julie : 3 enfants de plus de 6 ans, RFNR 150 000 $ (tranche supérieure)" },
+        "inputs": { "num_children": 3, "children": [{ "age": 8 }, { "age": 10 }, { "age": 14 }], "family_net_income": 150000 },
+        "result": {
+          "annual": 6431.76,
+          "monthly": 535.98,
+          "explanation": {
+            "en": "Max: $param:max_annual_6_to_17 × 3 = $20,244. $150,000 - $param:income_threshold_2 = $68,778. Partial: 8% × $68,778 = $5,502.24. Total reduction: $8,310 + $5,502.24 = $13,812.24. Annual: $20,244 - $13,812.24 = $6,431.76.",
+            "fr": "Max : $param:max_annual_6_to_17 × 3 = 20 244 $. 150 000 $ - $param:income_threshold_2 = 68 778 $. Partiel : 8 % × 68 778 $ = 5 502,24 $. Réduction totale : 8 310 $ + 5 502,24 $ = 13 812,24 $. Annuel : 20 244 $ - 13 812,24 $ = 6 431,76 $."
+          }
+        }
+      },
+      {
+        "name": "Kira",
+        "scenario": { "en": "Kira: 4 children over 6, AFNI $45,000 (mid bracket)", "fr": "Kira : 4 enfants de plus de 6 ans, RFNR 45 000 $ (tranche intermédiaire)" },
+        "inputs": { "num_children": 4, "children": [{ "age": 7 }, { "age": 9 }, { "age": 12 }, { "age": 16 }], "family_net_income": 45000 },
+        "result": {
+          "annual": 25264.01,
+          "monthly": 2105.33,
+          "explanation": {
+            "en": "Max: $param:max_annual_6_to_17 × 4 = $26,992. $45,000 - $param:income_threshold_1 = $7,513. Reduction: 23% × $7,513 = $1,727.99. Annual: $26,992 - $1,727.99 = $25,264.01.",
+            "fr": "Max : $param:max_annual_6_to_17 × 4 = 26 992 $. 45 000 $ - $param:income_threshold_1 = 7 513 $. Réduction : 23 % × 7 513 $ = 1 727,99 $. Annuel : 26 992 $ - 1 727,99 $ = 25 264,01 $."
+          }
+        }
+      },
+      {
+        "name": "Kira",
+        "scenario": { "en": "Kira: 4 children over 6, AFNI $200,000 (high bracket)", "fr": "Kira : 4 enfants de plus de 6 ans, RFNR 200 000 $ (tranche supérieure)" },
+        "inputs": { "num_children": 4, "children": [{ "age": 7 }, { "age": 9 }, { "age": 12 }, { "age": 16 }], "family_net_income": 200000 },
+        "result": {
+          "annual": 5649.09,
+          "monthly": 470.75,
+          "explanation": {
+            "en": "Max: $param:max_annual_6_to_17 × 4 = $26,992. $200,000 - $param:income_threshold_2 = $118,778. Partial: 9.5% × $118,778 = $11,283.91. Total reduction: $10,059 + $11,283.91 = $21,342.91. Annual: $26,992 - $21,342.91 = $5,649.09.",
+            "fr": "Max : $param:max_annual_6_to_17 × 4 = 26 992 $. 200 000 $ - $param:income_threshold_2 = 118 778 $. Partiel : 9,5 % × 118 778 $ = 11 283,91 $. Réduction totale : 10 059 $ + 11 283,91 $ = 21 342,91 $. Annuel : 26 992 $ - 21 342,91 $ = 5 649,09 $."
+          }
+        }
+      }
+    ]
+  },
+
+  "how_to_apply": {
+    "channels": [
+      {
+        "method": "birth-registration",
+        "description": {
+          "en": "Apply when you register the birth of your newborn with your province or territory.",
+          "fr": "Faites une demande lorsque vous enregistrez la naissance de votre nouveau-né auprès de votre province ou territoire."
+        }
+      },
+      {
+        "method": "online",
+        "description": {
+          "en": "Apply through CRA My Account",
+          "fr": "Faites une demande via Mon dossier de l'ARC"
+        },
+        "url": {
+          "en": "https://www.canada.ca/en/revenue-agency/services/e-services/digital-services-individuals/account-individuals.html",
+          "fr": "https://www.canada.ca/fr/agence-revenu/services/services-electroniques/services-numeriques-particuliers/dossier-particuliers.html"
+        },
+        "steps": [
+          { "en": "Sign in to My Account", "fr": "Connectez-vous à Mon dossier" },
+          { "en": "Click on Benefits and credits → Child information → Add", "fr": "Cliquez sur Prestations et crédits → Renseignements sur l'enfant → Ajouter" },
+          { "en": "Complete the 3 steps: confirm contact info, enter child info, review and submit", "fr": "Complétez les 3 étapes : confirmer vos coordonnées, entrer les renseignements de l'enfant, vérifier et soumettre" }
+        ]
+      },
+      {
+        "method": "mail",
+        "description": {
+          "en": "Fill out Form RC66, Canada Child Benefits Application, and mail it to your tax centre.",
+          "fr": "Remplissez le formulaire RC66, Demande de prestations canadiennes pour enfants, et envoyez-le à votre centre fiscal."
+        }
+      }
+    ],
+    "required_documents": [
+      { "en": "Social Insurance Number (SIN)", "fr": "Numéro d'assurance sociale (NAS)" },
+      { "en": "Proof of birth (if applying through My Account)", "fr": "Preuve de naissance (si demande via Mon dossier)" }
+    ]
+  },
+
+  "fees": {
+    "has_fees": false,
+    "details": {
+      "en": "There is no fee to apply for or receive the Canada Child Benefit.",
+      "fr": "Il n'y a aucun frais pour demander ou recevoir l'Allocation canadienne pour enfants."
+    }
+  },
+
+  "processing_time": {
+    "standard_days": 56,
+    "details": {
+      "en": "Online applications: about 8 weeks. Mail applications: about 11 weeks.",
+      "fr": "Demandes en ligne : environ 8 semaines. Demandes par la poste : environ 11 semaines."
+    }
+  }
+}
