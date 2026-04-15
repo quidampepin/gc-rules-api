@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>API Explorer - GC Rules API Experiment</title>
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/theme.min.css">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/messages.min.css">
+<noscript><link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/css/noscript.min.css"></noscript>
+<style>
+  pre.json-output {
+    background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px;
+    font-size: 13px; line-height: 1.5; max-height: 500px; overflow: auto;
+    white-space: pre-wrap; word-wrap: break-word;
+  }
+  pre.json-output .json-key { color: #9cdcfe; }
+  pre.json-output .json-str { color: #ce9178; }
+  pre.json-output .json-num { color: #b5cea8; }
+  pre.json-output .json-bool { color: #569cd6; }
+  pre.json-output .json-null { color: #569cd6; }
+  .endpoint-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; margin-right: 8px; color: #fff; }
+  .badge-get { background: #2e7d32; }
+  .badge-post { background: #1565c0; }
+  .endpoint-url { font-family: monospace; font-size: 14px; }
+  #request-body-group { display: none; }
+  .timing { font-size: 12px; color: #777; margin-top: 4px; }
+</style>
+</head>
+<body vocab="http://schema.org/" typeof="WebPage">
+<nav><ul id="wb-tphp"><li class="wb-slc"><a class="wb-sl" href="#wb-cont">Skip to main content</a></li></ul></nav>
+<header>
+<div id="wb-bnr" class="container">
+<div class="row">
+<div class="brand col-xs-9 col-sm-5 col-md-4" property="publisher" typeof="GovernmentOrganization">
+<a href="https://www.canada.ca/en.html" property="url">
+<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/sig-blk-en.svg" alt="Government of Canada" property="logo">
+</a>
+</div>
+</div>
+</div>
+<nav id="wb-bc" property="breadcrumb">
+<h2>You are here:</h2>
+<div class="container">
+<ol class="breadcrumb">
+<li><a href="index.html">GC Rules API Experiment</a></li>
+</ol>
+</div>
+</nav>
+</header>
+<main property="mainContentOfPage" class="container" typeof="WebPageElement">
+
+<div class="alert alert-info mrgn-bttm-lg">
+<p><strong>Proof of concept:</strong> This explorer simulates the GC Rules API by reading program JSON files directly in your browser. In production, these would be real API calls to a server. The JSON responses you see here are identical to what the API returns.</p>
+</div>
+
+<h1 property="name" id="wb-cont" class="gc-thickline">API Explorer</h1>
+<p>Try the GC Rules API endpoints. Select an endpoint, adjust the parameters, and see the JSON response. When running the real API locally (<code>uvicorn api.main:app --port 8000</code>), these same endpoints are available at <code>http://localhost:8000</code>.</p>
+
+<div class="row mrgn-tp-lg">
+
+<!-- Left: endpoint selector -->
+<div class="col-md-5">
+<h2 class="h4">Endpoint</h2>
+<div class="form-group">
+<select class="form-control" id="endpoint-select" onchange="onEndpointChange()">
+<optgroup label="GET — Read data">
+<option value="list-programs">GET /programs</option>
+<option value="get-program">GET /programs/{id}</option>
+<option value="get-parameters">GET /programs/{id}/parameters</option>
+<option value="get-eligibility">GET /programs/{id}/eligibility</option>
+<option value="get-amounts">GET /programs/{id}/amounts</option>
+</optgroup>
+<optgroup label="POST — Calculate">
+<option value="calculate-ccb">POST /programs/canada-child-benefit/calculate</option>
+<option value="calculate-ei">POST /programs/employment-insurance/calculate</option>
+<option value="calculate-oas">POST /programs/old-age-security/calculate</option>
+</optgroup>
+</select>
+</div>
+
+<div class="form-group" id="program-select-group">
+<label for="program-select">Program</label>
+<select class="form-control" id="program-select">
+<option value="canada-child-benefit">canada-child-benefit</option>
+<option value="employment-insurance">employment-insurance</option>
+<option value="old-age-security">old-age-security</option>
+</select>
+</div>
+
+<div id="request-body-group">
+<h2 class="h4">Request body <small>(JSON)</small></h2>
+<textarea class="form-control" id="request-body" rows="10" style="font-family:monospace;font-size:13px;"></textarea>
+</div>
+
+<button class="btn btn-primary mrgn-tp-md" onclick="executeEndpoint()">
+<span class="glyphicon glyphicon-play"></span> Execute
+</button>
+</div>
+
+<!-- Right: response -->
+<div class="col-md-7">
+<h2 class="h4">
+<span class="endpoint-badge" id="resp-method">GET</span>
+<span class="endpoint-url" id="resp-url">/programs</span>
+</h2>
+<div id="resp-status" class="mrgn-bttm-sm"></div>
+<pre class="json-output" id="resp-body">← Click "Execute" to see the response</pre>
+<div class="timing" id="resp-timing"></div>
+</div>
+</div>
+
+<div class="well mrgn-tp-lg">
+<h2 class="h4 mrgn-tp-0">About the API</h2>
+<p>The GC Rules API exposes program rules, eligibility criteria, and benefit calculations as structured JSON. It's designed so that AI assistants, web apps, and internal tools can query authoritative program data instead of scraping web pages or relying on training data.</p>
+<dl class="dl-horizontal">
+<dt>GET endpoints</dt><dd>Read program data, parameters, eligibility rules, and amounts.</dd>
+<dt>POST /calculate</dt><dd>Submit an applicant's situation and receive calculated benefit amounts. All math uses parameters from the JSON — zero hardcoded values.</dd>
+<dt>POST /check-eligibility</dt><dd>Run inputs through a decision table to determine eligibility status.</dd>
+</dl>
+</div>
+
+<div class="pagedetails mrgn-tp-lg">
+<dl id="wb-dtmd"><dt>Date modified:</dt><dd><time property="dateModified">2026-04-14</time></dd></dl>
+</div>
+</main>
+
+<footer id="wb-info">
+<div class="landscape"><nav class="container wb-navcurr"><h2 class="wb-inv">About government</h2></nav></div>
+<div class="brand"><div class="container"><div class="row">
+<nav class="col-md-10 ftr-urlt-lnk"></nav>
+<div class="col-xs-6 visible-sm visible-xs tofpg"><a href="#wb-cont">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a></div>
+<div class="col-xs-6 col-md-2 text-right"><img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/wmms-blk.svg" alt="Symbol of the Government of Canada"></div>
+</div></div></div>
+</footer>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/js/wet-boew.min.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/js/theme.min.js"></script>
+<script>
+// ─── Data loading ────────────────────────────────────────────────
+var programs = {};
+var JSON_BASE = "../programs";
+var FILES = ["canada-child-benefit.json","employment-insurance.json","old-age-security.json"];
+var loaded = 0;
+
+FILES.forEach(function(f) {
+  fetch(JSON_BASE + "/" + f)
+    .then(function(r) { return r.json(); })
+    .then(function(data) { programs[data.id] = data; loaded++; })
+    .catch(function() {});
+});
+
+function params(pid) {
+  var p = {};
+  (programs[pid].amounts.parameters || []).forEach(function(param) { p[param.id] = param.value; });
+  return p;
+}
+
+// ─── Default request bodies ──────────────────────────────────────
+var defaultBodies = {
+  "calculate-ccb": {
+    num_children: 2,
+    children: [{age: 4}, {age: 8}],
+    family_net_income: 55000
+  },
+  "calculate-ei": {
+    average_insurable_weekly_earnings: 900
+  },
+  "calculate-oas": {
+    applicant_age: 68,
+    years_residence_after_18: 25,
+    individual_net_income: 40000
+  }
+};
+
+// ─── UI ──────────────────────────────────────────────────────────
+function onEndpointChange() {
+  var val = document.getElementById("endpoint-select").value;
+  var isPost = val.startsWith("calculate");
+  var needsProgram = val !== "list-programs" && !isPost;
+  document.getElementById("request-body-group").style.display = isPost ? "block" : "none";
+  document.getElementById("program-select-group").style.display = needsProgram ? "block" : "none";
+  if (isPost) {
+    document.getElementById("request-body").value = JSON.stringify(defaultBodies[val], null, 2);
+  }
+  updateUrlDisplay();
+}
+
+function updateUrlDisplay() {
+  var val = document.getElementById("endpoint-select").value;
+  var pid = document.getElementById("program-select").value;
+  var method, url;
+  switch(val) {
+    case "list-programs": method="GET"; url="/programs"; break;
+    case "get-program": method="GET"; url="/programs/" + pid; break;
+    case "get-parameters": method="GET"; url="/programs/" + pid + "/parameters"; break;
+    case "get-eligibility": method="GET"; url="/programs/" + pid + "/eligibility"; break;
+    case "get-amounts": method="GET"; url="/programs/" + pid + "/amounts"; break;
+    case "calculate-ccb": method="POST"; url="/programs/canada-child-benefit/calculate"; break;
+    case "calculate-ei": method="POST"; url="/programs/employment-insurance/calculate"; break;
+    case "calculate-oas": method="POST"; url="/programs/old-age-security/calculate"; break;
+  }
+  var badge = document.getElementById("resp-method");
+  badge.textContent = method;
+  badge.className = "endpoint-badge " + (method === "GET" ? "badge-get" : "badge-post");
+  document.getElementById("resp-url").textContent = url;
+}
+
+// ─── Calculators (same logic as Python API) ──────────────────────
+function calcCCB(inputs) {
+  var p = params("canada-child-benefit");
+  var children = inputs.children || [];
+  var num = inputs.num_children || children.length;
+  var income = inputs.family_net_income || 0;
+  var totalMax = 0;
+  children.forEach(function(c) {
+    totalMax += c.age < p.young_child_age_cutoff ? p.max_annual_under_6 : p.max_annual_6_to_17;
+  });
+  var table = programs["canada-child-benefit"].amounts.calculation.step_2_income_reduction.reduction_table;
+  var tier = null;
+  table.forEach(function(row) {
+    var nc = row.num_children;
+    if (typeof nc === "number" && nc === num) tier = row;
+    else if (typeof nc === "string" && nc.endsWith("+") && num >= parseInt(nc)) tier = row;
+  });
+  if (!tier) tier = table[table.length - 1];
+  var annual;
+  if (income <= p.income_threshold_1) annual = totalMax;
+  else if (income <= p.income_threshold_2) annual = Math.max(0, totalMax - tier.rate_mid * (income - p.income_threshold_1));
+  else annual = Math.max(0, totalMax - tier.base_reduction - tier.rate_high * (income - p.income_threshold_2));
+  annual = Math.round(annual * 100) / 100;
+  return {
+    program_id: "canada-child-benefit", currency: "CAD", frequency: "monthly",
+    annual: annual, monthly: Math.round(annual/12*100)/100,
+    parameters_used: p, inputs_received: inputs
+  };
+}
+
+function calcEI(inputs) {
+  var p = params("employment-insurance");
+  var weekly = Math.min((p.benefit_rate/100) * (inputs.average_insurable_weekly_earnings || 0), p.max_weekly_benefit);
+  weekly = Math.round(weekly * 100) / 100;
+  return {
+    program_id: "employment-insurance", currency: "CAD", frequency: "bi-weekly",
+    weekly: weekly, bi_weekly: Math.round(weekly*2*100)/100,
+    parameters_used: p, inputs_received: inputs
+  };
+}
+
+function calcOAS(inputs) {
+  var p = params("old-age-security");
+  var age = inputs.applicant_age || 0;
+  var years = inputs.years_residence_after_18 || 0;
+  var income = inputs.individual_net_income || 0;
+  var maxPension = age >= p.senior_age_cutoff ? p.max_monthly_75_plus : p.max_monthly_65_to_74;
+  var proportion = Math.min(years / p.full_pension_years, 1.0);
+  var base = maxPension * proportion;
+  var pension;
+  if (income > p.clawback_threshold) {
+    pension = Math.max(0, base - (p.clawback_rate/100)*(income - p.clawback_threshold)/12);
+  } else { pension = base; }
+  pension = Math.round(pension * 100) / 100;
+  return {
+    program_id: "old-age-security", currency: "CAD", frequency: "monthly",
+    monthly: pension, annual: Math.round(pension*12*100)/100,
+    full_or_partial: years >= p.full_pension_years ? "full" : "partial",
+    parameters_used: p, inputs_received: inputs
+  };
+}
+
+// ─── Execute ─────────────────────────────────────────────────────
+function executeEndpoint() {
+  var t0 = performance.now();
+  var val = document.getElementById("endpoint-select").value;
+  var pid = document.getElementById("program-select").value;
+  var response;
+
+  try {
+    switch(val) {
+      case "list-programs":
+        response = Object.keys(programs).map(function(k) {
+          var p = programs[k];
+          return {id: p.id, name: p.name.en, description: p.description.en, status: p.status, administered_by: p.administered_by.name.en, last_updated: p.last_updated};
+        });
+        break;
+      case "get-program": response = programs[pid]; break;
+      case "get-parameters":
+        response = {program_id: pid, parameters: programs[pid].amounts.parameters, resolved: params(pid)};
+        break;
+      case "get-eligibility": response = programs[pid].eligibility; break;
+      case "get-amounts": response = programs[pid].amounts; break;
+      case "calculate-ccb": response = calcCCB(JSON.parse(document.getElementById("request-body").value)); break;
+      case "calculate-ei": response = calcEI(JSON.parse(document.getElementById("request-body").value)); break;
+      case "calculate-oas": response = calcOAS(JSON.parse(document.getElementById("request-body").value)); break;
+    }
+
+    var elapsed = Math.round(performance.now() - t0);
+    document.getElementById("resp-status").innerHTML = '<span class="label label-success">200 OK</span>';
+    document.getElementById("resp-body").innerHTML = syntaxHighlight(JSON.stringify(response, null, 2));
+    document.getElementById("resp-timing").textContent = "Completed in " + elapsed + "ms (client-side)";
+  } catch(e) {
+    document.getElementById("resp-status").innerHTML = '<span class="label label-danger">Error</span>';
+    document.getElementById("resp-body").textContent = e.message;
+    document.getElementById("resp-timing").textContent = "";
+  }
+  updateUrlDisplay();
+}
+
+function syntaxHighlight(json) {
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    function(match) {
+      var cls = 'json-num';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-str';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-bool';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    }
+  );
+}
+
+// Init
+onEndpointChange();
+</script>
+</body>
+</html>

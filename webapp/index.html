@@ -1,509 +1,166 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="no-js" lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GC Benefits Estimator — Proof of Concept</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .tab-active-blue { background: #2563eb; color: white; }
-    .tab-active-green { background: #059669; color: white; }
-    .tab-active-purple { background: #7c3aed; color: white; }
-    input[type="number"] { -moz-appearance: textfield; }
-    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
+<meta charset="utf-8">
+<title>GC Rules API — Experiment</title>
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/theme.min.css">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/messages.min.css">
+<noscript><link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/css/noscript.min.css"></noscript>
 </head>
-<body class="bg-gray-50 min-h-screen">
-<div id="root"></div>
-<script type="text/babel">
-const { useState, useEffect } = React;
+<body vocab="http://schema.org/" typeof="WebPage">
+<nav><ul id="wb-tphp"><li class="wb-slc"><a class="wb-sl" href="#wb-cont">Skip to main content</a></li></ul></nav>
+<header>
+<div id="wb-bnr" class="container">
+<div class="row">
+<div class="brand col-xs-9 col-sm-5 col-md-4" property="publisher" typeof="GovernmentOrganization">
+<a href="https://www.canada.ca/en.html" property="url">
+<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/sig-blk-en.svg" alt="Government of Canada" property="logo">
+</a>
+</div>
+</div>
+</div>
+</header>
+<main property="mainContentOfPage" class="container" typeof="WebPageElement">
 
-// ─── Configuration ───────────────────────────────────────────────
-// When served from GitHub Pages, JSON files are in ../programs/
-// When served locally, try relative paths
-const JSON_BASE = "../programs";
-const PROGRAM_FILES = [
-  "canada-child-benefit.json",
-  "employment-insurance.json",
-  "old-age-security.json"
-];
+<h1 property="name" id="wb-cont" class="gc-thickline">GC Rules API — Experiment</h1>
+<p class="mrgn-tp-md">A proof of concept exploring what happens when Government of Canada program rules live as structured data instead of scattered across web pages, PDFs, and internal systems.</p>
 
-// ─── Helpers ─────────────────────────────────────────────────────
-const fmt = (n) => "$" + Number(n).toLocaleString("en-CA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtInt = (n) => "$" + Number(n).toLocaleString("en-CA");
+<div class="alert alert-warning">
+<p><strong>Not an official Government of Canada product.</strong> This is a personal experiment for demonstration and discussion purposes only. The rules and amounts may not be current.</p>
+</div>
 
-function buildParams(program) {
-  const params = {};
-  for (const p of (program.amounts?.parameters || [])) {
-    params[p.id] = p.value;
-  }
-  return params;
-}
+<h2>The idea</h2>
+<p>Encode each program's rules, thresholds, rates, and examples once — in machine-readable JSON files — then generate every downstream artefact from that single source. Update one number in the JSON, and every channel updates automatically.</p>
 
-// ─── Calculators (same logic as the API, running client-side) ────
+<h2>Four channels, one source</h2>
+<p>The same JSON files (<code>programs/*.json</code>) power all four of these:</p>
 
-function calculateCCB(program, inputs) {
-  const params = buildParams(program);
-  const { children = [], family_net_income = 0 } = inputs;
-  const num_children = inputs.num_children || children.length;
+<div class="row mrgn-tp-lg">
+<div class="col-md-6">
+<section class="panel panel-primary">
+<header class="panel-heading"><h3 class="panel-title">Benefits Estimator</h3></header>
+<div class="panel-body">
+<p>An interactive calculator for CCB, EI, and OAS. Enter your situation, get your estimated amounts. All calculation logic runs in your browser — reads the JSON, applies the rules, shows the result.</p>
+<p><a href="estimator.html" class="btn btn-primary">Try the estimator</a></p>
+</div>
+</section>
+</div>
+<div class="col-md-6">
+<section class="panel panel-primary">
+<header class="panel-heading"><h3 class="panel-title">API Explorer</h3></header>
+<div class="panel-body">
+<p>Browse the REST API endpoints: list programs, read parameters, check eligibility, calculate benefits. See the exact JSON responses. Simulated client-side — identical output to the real FastAPI server.</p>
+<p><a href="api.html" class="btn btn-primary">Explore the API</a></p>
+</div>
+</section>
+</div>
+</div>
 
-  let total_max = 0;
-  for (const child of children) {
-    total_max += child.age < params.young_child_age_cutoff
-      ? params.max_annual_under_6
-      : params.max_annual_6_to_17;
-  }
+<div class="row">
+<div class="col-md-6">
+<section class="panel panel-default">
+<header class="panel-heading"><h3 class="panel-title">Static Canada.ca page</h3></header>
+<div class="panel-body">
+<p>A Canada.ca-style "How much you can get" page for the Canada Child Benefit. Generated by a Python script that reads the JSON file — every amount, threshold, and example comes from the data.</p>
+<p><a href="../site/_site/en/canada-child-benefit/how-much.html" class="btn btn-default">View the static page</a></p>
+</div>
+</section>
+</div>
+<div class="col-md-6">
+<section class="panel panel-default">
+<header class="panel-heading"><h3 class="panel-title">LLM Chatbot</h3></header>
+<div class="panel-body">
+<p>A local chatbot (Ollama) that answers questions about programs by reading Markdown fact sheets derived from the JSON. No hallucinated numbers — the model only sees the actual data. Requires a local setup.</p>
+<p><code>python chat.py</code></p>
+</div>
+</section>
+</div>
+</div>
 
-  const table = program.amounts.calculation.step_2_income_reduction.reduction_table;
-  let tier = null;
-  for (const row of table) {
-    const nc = row.num_children;
-    if (typeof nc === "number" && nc === num_children) { tier = row; break; }
-    if (typeof nc === "string" && nc.endsWith("+")) {
-      const min_nc = parseInt(nc);
-      if (num_children >= min_nc) tier = row;
-    }
-  }
-  if (!tier) tier = table[table.length - 1];
+<h2>Programs included</h2>
+<div class="row" id="programs-list">
+<p class="text-muted mrgn-lft-md">Loading program data...</p>
+</div>
 
-  let annual;
-  if (family_net_income <= params.income_threshold_1) {
-    annual = total_max;
-  } else if (family_net_income <= params.income_threshold_2) {
-    annual = Math.max(0, total_max - tier.rate_mid * (family_net_income - params.income_threshold_1));
-  } else {
-    annual = Math.max(0, total_max - tier.base_reduction - tier.rate_high * (family_net_income - params.income_threshold_2));
-  }
+<h2>How to run locally</h2>
+<p>From the repository root:</p>
+<pre>
+# Serve the static files (webapp, static site, JSON)
+python -m http.server 3000
+# Open http://localhost:3000/webapp/
 
-  return {
-    annual: Math.round(annual * 100) / 100,
-    monthly: Math.round(annual / 12 * 100) / 100,
-    total_max,
-    params,
-    inputs
-  };
-}
+# Or run the real API server
+pip install -r requirements.txt
+uvicorn api.main:app --reload --port 8000
+# Open http://localhost:8000/docs for Swagger UI
 
-function calculateEI(program, inputs) {
-  const params = buildParams(program);
-  const weekly_earnings = inputs.average_insurable_weekly_earnings || 0;
-  const rate = params.benefit_rate / 100;
-  const weekly = Math.min(rate * weekly_earnings, params.max_weekly_benefit);
+# Or chat with the LLM
+pip install ollama
+ollama pull qwen2.5:7b-instruct-q4_K_M
+python chat.py
+</pre>
 
-  return {
-    weekly: Math.round(weekly * 100) / 100,
-    bi_weekly: Math.round(weekly * 2 * 100) / 100,
-    params,
-    inputs
-  };
-}
+<h2>The architecture</h2>
+<pre>
+programs/*.json          ← Single source of truth (rules, rates, thresholds, examples)
+    │
+    ├── webapp/          ← This site (estimator + API explorer, client-side JS)
+    ├── site/build.py    ← Static Canada.ca HTML pages (generated)
+    ├── md_export.py     ← Markdown fact sheets → LLM chatbot (chat.py)
+    └── api/main.py      ← REST API (FastAPI)
+</pre>
+<p>Change a number in the JSON, rebuild, and all four channels reflect the change.</p>
 
-function calculateOAS(program, inputs) {
-  const params = buildParams(program);
-  const { applicant_age = 0, years_residence_after_18 = 0, individual_net_income = 0 } = inputs;
+<div class="pagedetails mrgn-tp-lg">
+<dl id="wb-dtmd"><dt>Date modified:</dt><dd><time property="dateModified">2026-04-14</time></dd></dl>
+</div>
+</main>
 
-  const max_pension = applicant_age >= params.senior_age_cutoff
-    ? params.max_monthly_75_plus
-    : params.max_monthly_65_to_74;
+<footer id="wb-info">
+<div class="landscape"><nav class="container wb-navcurr"><h2 class="wb-inv">About government</h2></nav></div>
+<div class="brand"><div class="container"><div class="row">
+<nav class="col-md-10 ftr-urlt-lnk"></nav>
+<div class="col-xs-6 visible-sm visible-xs tofpg"><a href="#wb-cont">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a></div>
+<div class="col-xs-6 col-md-2 text-right"><img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/wmms-blk.svg" alt="Symbol of the Government of Canada"></div>
+</div></div></div>
+</footer>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/js/wet-boew.min.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/js/theme.min.js"></script>
+<script>
+var JSON_BASE = "../programs";
+var FILES = ["canada-child-benefit.json","employment-insurance.json","old-age-security.json"];
+var loaded = 0;
+var allPrograms = [];
 
-  const proportion = Math.min(years_residence_after_18 / params.full_pension_years, 1.0);
-  const base_pension = max_pension * proportion;
-
-  let pension;
-  if (individual_net_income > params.clawback_threshold) {
-    const monthly_clawback = (params.clawback_rate / 100) * (individual_net_income - params.clawback_threshold) / 12;
-    pension = Math.max(0, base_pension - monthly_clawback);
-  } else {
-    pension = base_pension;
-  }
-
-  return {
-    monthly: Math.round(pension * 100) / 100,
-    annual: Math.round(pension * 12 * 100) / 100,
-    full_or_partial: years_residence_after_18 >= params.full_pension_years ? "full" : "partial",
-    params,
-    inputs
-  };
-}
-
-// ─── Form Components ─────────────────────────────────────────────
-
-function CCBForm({ program, onResult }) {
-  const [income, setIncome] = useState(55000);
-  const [children, setChildren] = useState([{ age: 3 }, { age: 8 }]);
-
-  const addChild = () => setChildren([...children, { age: 0 }]);
-  const removeChild = (i) => setChildren(children.filter((_, idx) => idx !== i));
-  const setAge = (i, age) => {
-    const c = [...children];
-    c[i] = { age: parseInt(age) || 0 };
-    setChildren(c);
-  };
-
-  const calculate = () => {
-    const result = calculateCCB(program, {
-      num_children: children.length,
-      children,
-      family_net_income: income
-    });
-    onResult(result);
-  };
-
-  return (
-    <div className="space-y-4">
-      <FieldLabel label="Family net income (AFNI)">
-        <DollarInput value={income} onChange={setIncome} />
-      </FieldLabel>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Children</label>
-        {children.map((child, i) => (
-          <div key={i} className="flex items-center gap-2 mb-2">
-            <span className="text-sm text-gray-500 w-20">Child {i + 1}</span>
-            <input type="number" min="0" max="17" value={child.age}
-              onChange={(e) => setAge(i, e.target.value)}
-              className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-            <span className="text-xs text-gray-400">years old</span>
-            {children.length > 1 && (
-              <button onClick={() => removeChild(i)} className="text-red-400 hover:text-red-600 text-xs ml-1">remove</button>
-            )}
-          </div>
-        ))}
-        {children.length < 6 && (
-          <button onClick={addChild} className="text-sm text-blue-600 hover:text-blue-800 mt-1">+ Add child</button>
-        )}
-      </div>
-      <CalcButton onClick={calculate} color="blue" label="Estimate CCB" />
-    </div>
-  );
-}
-
-function EIForm({ program, onResult }) {
-  const [earnings, setEarnings] = useState(900);
-
-  const calculate = () => {
-    const result = calculateEI(program, { average_insurable_weekly_earnings: earnings });
-    onResult(result);
-  };
-
-  return (
-    <div className="space-y-4">
-      <FieldLabel label="Average insurable weekly earnings">
-        <DollarInput value={earnings} onChange={setEarnings} />
-      </FieldLabel>
-      <p className="text-xs text-gray-400">Tip: divide your annual salary by 52 to get weekly earnings.</p>
-      <CalcButton onClick={calculate} color="green" label="Estimate EI benefits" />
-    </div>
-  );
-}
-
-function OASForm({ program, onResult }) {
-  const [age, setAge] = useState(68);
-  const [years, setYears] = useState(30);
-  const [income, setIncome] = useState(45000);
-
-  const calculate = () => {
-    const result = calculateOAS(program, {
-      applicant_age: age,
-      years_residence_after_18: years,
-      individual_net_income: income
-    });
-    onResult(result);
-  };
-
-  return (
-    <div className="space-y-4">
-      <FieldLabel label="Your age">
-        <input type="number" min="65" max="100" value={age} onChange={(e) => setAge(Number(e.target.value))}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
-      </FieldLabel>
-      <FieldLabel label="Years of residence in Canada (after age 18)">
-        <input type="number" min="0" max="60" value={years} onChange={(e) => setYears(Number(e.target.value))}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
-      </FieldLabel>
-      <FieldLabel label="Individual net income">
-        <DollarInput value={income} onChange={setIncome} />
-      </FieldLabel>
-      <CalcButton onClick={calculate} color="purple" label="Estimate OAS pension" />
-    </div>
-  );
-}
-
-// ─── Shared UI pieces ────────────────────────────────────────────
-
-function FieldLabel({ label, children }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function DollarInput({ value, onChange }) {
-  return (
-    <div className="relative">
-      <span className="absolute left-3 top-2 text-gray-400 text-sm">$</span>
-      <input type="number" value={value} onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-    </div>
-  );
-}
-
-function CalcButton({ onClick, color, label }) {
-  const colors = {
-    blue: "bg-blue-600 hover:bg-blue-700",
-    green: "bg-green-600 hover:bg-green-700",
-    purple: "bg-purple-600 hover:bg-purple-700"
-  };
-  return (
-    <button onClick={onClick}
-      className={`w-full ${colors[color]} text-white py-2.5 rounded-lg text-sm font-medium transition-colors`}>
-      {label}
-    </button>
-  );
-}
-
-// ─── Result displays ─────────────────────────────────────────────
-
-function CCBResult({ data }) {
-  const p = data.params;
-  const inp = data.inputs;
-  const underCount = (inp.children || []).filter(c => c.age < 6).length;
-  const overCount = (inp.children || []).filter(c => c.age >= 6).length;
-
-  return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 fade-in">
-      <div className="text-center mb-3">
-        <div className="text-3xl font-bold text-blue-700">{fmt(data.monthly)}<span className="text-base font-normal text-blue-400"> / month</span></div>
-        <div className="text-sm text-blue-500 mt-1">{fmt(data.annual)} per year</div>
-      </div>
-      <div className="border-t border-blue-200 pt-3 text-sm text-gray-600 space-y-1.5">
-        <div className="font-medium text-gray-700">How it's calculated:</div>
-        {underCount > 0 && <div>• {underCount} child(ren) under 6 — max {fmtInt(p.max_annual_under_6)}/yr each</div>}
-        {overCount > 0 && <div>• {overCount} child(ren) aged 6-17 — max {fmtInt(p.max_annual_6_to_17)}/yr each</div>}
-        <div>• Maximum before reduction: {fmt(data.total_max)}/yr</div>
-        {inp.family_net_income <= p.income_threshold_1 && (
-          <div className="text-green-700 font-medium">✓ Income at or below {fmtInt(p.income_threshold_1)} — you receive the maximum</div>
-        )}
-        {inp.family_net_income > p.income_threshold_1 && inp.family_net_income <= p.income_threshold_2 && (
-          <div className="text-yellow-700">↓ Income of {fmtInt(inp.family_net_income)} is in the mid bracket ({fmtInt(p.income_threshold_1)}–{fmtInt(p.income_threshold_2)}) — benefit reduced</div>
-        )}
-        {inp.family_net_income > p.income_threshold_2 && (
-          <div className="text-orange-700">↓ Income of {fmtInt(inp.family_net_income)} exceeds {fmtInt(p.income_threshold_2)} — higher reduction rate applies</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function EIResult({ data }) {
-  const p = data.params;
-  return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-5 fade-in">
-      <div className="text-center mb-3">
-        <div className="text-3xl font-bold text-green-700">{fmt(data.weekly)}<span className="text-base font-normal text-green-400"> / week</span></div>
-        <div className="text-sm text-green-500 mt-1">{fmt(data.bi_weekly)} bi-weekly</div>
-      </div>
-      <div className="border-t border-green-200 pt-3 text-sm text-gray-600 space-y-1.5">
-        <div className="font-medium text-gray-700">How it's calculated:</div>
-        <div>• {p.benefit_rate}% of your weekly earnings ({fmtInt(data.inputs.average_insurable_weekly_earnings)})</div>
-        <div>• Maximum weekly benefit: {fmtInt(p.max_weekly_benefit)}</div>
-        <div>• {p.waiting_period_weeks}-week waiting period before payments begin</div>
-        <div>• Benefits payable for {p.min_weeks_payable} to {p.max_weeks_payable} weeks (depends on region and hours worked)</div>
-        {data.weekly >= p.max_weekly_benefit && (
-          <div className="text-orange-700">⚠ You've hit the weekly maximum of {fmtInt(p.max_weekly_benefit)}</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function OASResult({ data }) {
-  const p = data.params;
-  const inp = data.inputs;
-  return (
-    <div className="bg-purple-50 border border-purple-200 rounded-lg p-5 fade-in">
-      <div className="text-center mb-3">
-        <div className="text-3xl font-bold text-purple-700">{fmt(data.monthly)}<span className="text-base font-normal text-purple-400"> / month</span></div>
-        <div className="text-sm text-purple-500 mt-1">{fmt(data.annual)} per year — {data.full_or_partial} pension</div>
-      </div>
-      <div className="border-t border-purple-200 pt-3 text-sm text-gray-600 space-y-1.5">
-        <div className="font-medium text-gray-700">How it's calculated:</div>
-        <div>• Age bracket: {inp.applicant_age >= p.senior_age_cutoff ? "75+" : "65–74"} (max {fmt(inp.applicant_age >= p.senior_age_cutoff ? p.max_monthly_75_plus : p.max_monthly_65_to_74)}/mo)</div>
-        <div>• Residence: {inp.years_residence_after_18} of {p.full_pension_years} years ({data.full_or_partial === "full" ? "100%" : Math.round(inp.years_residence_after_18 / p.full_pension_years * 100) + "%"})</div>
-        {inp.individual_net_income > p.clawback_threshold ? (
-          <div className="text-orange-700">↓ Income above {fmtInt(p.clawback_threshold)} — {p.clawback_rate}% recovery tax applied on excess</div>
-        ) : (
-          <div className="text-green-700">✓ No recovery tax — income below {fmtInt(p.clawback_threshold)}</div>
-        )}
-        {data.monthly === 0 && (
-          <div className="text-red-600 font-medium">Pension fully clawed back at this income level.</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Data source banner ──────────────────────────────────────────
-
-function DataSourceBanner({ programs }) {
-  const dates = programs.map(p => p.last_updated).sort().reverse();
-  return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-800">
-      <strong>Data source:</strong> All amounts, thresholds, and rates are loaded at runtime from structured JSON files —
-      the same files that power the API, the static site, and the LLM chatbot.
-      Last updated: {dates[0]}.
-      Zero hardcoded values in this page.
-    </div>
-  );
-}
-
-// ─── Main App ────────────────────────────────────────────────────
-
-const TABS = [
-  { id: "ccb", jsonId: "canada-child-benefit", label: "Canada Child Benefit", short: "CCB", color: "blue" },
-  { id: "ei",  jsonId: "employment-insurance", label: "Employment Insurance", short: "EI", color: "green" },
-  { id: "oas", jsonId: "old-age-security", label: "Old Age Security", short: "OAS", color: "purple" },
-];
-
-function App() {
-  const [programs, setPrograms] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("ccb");
-  const [results, setResults] = useState({});
-
-  useEffect(() => {
-    Promise.all(
-      PROGRAM_FILES.map(f =>
-        fetch(`${JSON_BASE}/${f}`).then(r => {
-          if (!r.ok) throw new Error(`Failed to load ${f}`);
-          return r.json();
-        })
-      )
-    )
-    .then(data => {
-      const map = {};
-      data.forEach(p => { map[p.id] = p; });
-      setPrograms(map);
-      setLoading(false);
+FILES.forEach(function(f) {
+  fetch(JSON_BASE + "/" + f)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      allPrograms.push(data);
+      loaded++;
+      if (loaded === FILES.length) renderPrograms();
     })
-    .catch(err => {
-      setError(err.message);
-      setLoading(false);
-    });
-  }, []);
+    .catch(function() {});
+});
 
-  const setResult = (id, data) => setResults(prev => ({ ...prev, [id]: data }));
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Loading program data...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
-          <div className="text-red-700 font-medium mb-2">Could not load program data</div>
-          <div className="text-red-500 text-sm mb-4">{error}</div>
-          <div className="text-gray-500 text-xs">
-            Make sure the JSON files are accessible. If running locally, use a local server:<br/>
-            <code className="bg-gray-100 px-2 py-1 rounded text-xs mt-2 inline-block">
-              cd gc-rules-api && python -m http.server 3000
-            </code><br/>
-            <span className="mt-1 inline-block">then open <code className="bg-gray-100 px-1 rounded">http://localhost:3000/webapp/</code></span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const tab = TABS.find(t => t.id === activeTab);
-  const program = programs[tab.jsonId];
-
-  return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-lg mx-auto space-y-5">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">GC Benefits Estimator</h1>
-          <p className="text-sm text-gray-500 mt-1">Proof of concept — powered by structured JSON rules</p>
-        </div>
-
-        <DataSourceBanner programs={Object.values(programs)} />
-
-        {/* Tabs */}
-        <div className="flex gap-2">
-          {TABS.map(t => {
-            const isActive = activeTab === t.id;
-            const activeClass = `tab-active-${t.color}`;
-            return (
-              <button key={t.id} onClick={() => setActiveTab(t.id)}
-                className={`flex-1 py-2 px-2 rounded-lg text-sm font-medium transition-all ${
-                  isActive ? activeClass : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                }`}>
-                <span className="hidden sm:inline">{t.label}</span>
-                <span className="sm:hidden">{t.short}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-1">
-            {program.name.en}
-          </h2>
-          <p className="text-sm text-gray-500 mb-5">{program.description.en}</p>
-
-          {activeTab === "ccb" && <CCBForm program={program} onResult={(r) => setResult("ccb", r)} />}
-          {activeTab === "ei"  && <EIForm  program={program} onResult={(r) => setResult("ei", r)} />}
-          {activeTab === "oas" && <OASForm program={program} onResult={(r) => setResult("oas", r)} />}
-
-          {results[activeTab] && (
-            <div className="mt-6">
-              {activeTab === "ccb" && <CCBResult data={results.ccb} />}
-              {activeTab === "ei"  && <EIResult  data={results.ei} />}
-              {activeTab === "oas" && <OASResult data={results.oas} />}
-            </div>
-          )}
-        </div>
-
-        {/* Source info */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">How this works</h3>
-          <div className="text-xs text-gray-500 space-y-1.5">
-            <p>This page loads the same JSON files that power the REST API, the static Canada.ca-style site, and the LLM chatbot. The calculation logic runs entirely in your browser — no server needed.</p>
-            <p>Update a number in the JSON, and every channel reflects the change: this estimator, the API responses, the generated HTML pages, and the chatbot answers.</p>
-            <p className="pt-1">
-              <a href="https://github.com/DavidPepin/gc-rules-api" target="_blank" className="text-blue-600 hover:underline">View source on GitHub</a>
-              <span className="mx-2 text-gray-300">|</span>
-              <span>Programs: {Object.keys(programs).length}</span>
-              <span className="mx-2 text-gray-300">|</span>
-              <span>All amounts from JSON — zero hardcoded</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="text-center text-xs text-gray-400 pb-4">
-          Not an official Government of Canada product. For demonstration purposes only.
-        </div>
-      </div>
-    </div>
-  );
+function renderPrograms() {
+  allPrograms.sort(function(a,b) { return a.name.en.localeCompare(b.name.en); });
+  var html = "";
+  allPrograms.forEach(function(p) {
+    var paramCount = (p.amounts && p.amounts.parameters) ? p.amounts.parameters.length : 0;
+    html += '<div class="col-md-4"><section class="panel panel-default">' +
+      '<header class="panel-heading"><h3 class="panel-title">' + p.name.en + '</h3></header>' +
+      '<div class="panel-body"><p class="small">' + p.description.en + '</p>' +
+      '<dl class="dl-horizontal small">' +
+      '<dt>Status</dt><dd>' + p.status + '</dd>' +
+      '<dt>Parameters</dt><dd>' + paramCount + '</dd>' +
+      '<dt>Updated</dt><dd>' + p.last_updated + '</dd>' +
+      '</dl></div></section></div>';
+  });
+  document.getElementById("programs-list").innerHTML = html;
 }
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>

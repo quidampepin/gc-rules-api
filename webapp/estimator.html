@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>Benefits Estimator - GC Rules API Experiment</title>
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/theme.min.css">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/messages.min.css">
+<noscript><link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/css/noscript.min.css"></noscript>
+<style>
+  .result-box { display: none; }
+  .result-box.active { display: block; }
+  .result-amount { font-size: 2em; font-weight: bold; }
+  .result-amount small { font-size: 0.5em; font-weight: normal; color: #555; }
+  #children-list .child-row { margin-bottom: 8px; }
+  .calc-detail { margin-top: 0.5em; }
+</style>
+</head>
+<body vocab="http://schema.org/" typeof="WebPage">
+<nav><ul id="wb-tphp"><li class="wb-slc"><a class="wb-sl" href="#wb-cont">Skip to main content</a></li></ul></nav>
+<header>
+<div id="wb-bnr" class="container">
+<div class="row">
+<div class="brand col-xs-9 col-sm-5 col-md-4" property="publisher" typeof="GovernmentOrganization">
+<a href="https://www.canada.ca/en.html" property="url">
+<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/sig-blk-en.svg" alt="Government of Canada" property="logo">
+</a>
+</div>
+</div>
+</div>
+<nav id="wb-bc" property="breadcrumb">
+<h2>You are here:</h2>
+<div class="container">
+<ol class="breadcrumb">
+<li><a href="index.html">GC Rules API Experiment</a></li>
+</ol>
+</div>
+</nav>
+</header>
+<main property="mainContentOfPage" class="container" typeof="WebPageElement">
+
+<div class="alert alert-info mrgn-bttm-lg">
+<p><strong>Proof of concept:</strong> This estimator loads program rules from JSON files and runs all calculations in your browser. No server required. Every amount, threshold, and rate comes from the same JSON that powers the API, the static site, and the chatbot.</p>
+</div>
+
+<h1 property="name" id="wb-cont" class="gc-thickline">Benefits Estimator</h1>
+<p>Estimate your benefits for Government of Canada programs. Select a program below, enter your information, and see your estimated amounts.</p>
+
+<!-- Program selector tabs -->
+<div class="wb-tabs mrgn-tp-lg">
+<div class="tabpanels">
+
+<!-- CCB TAB -->
+<details id="tab-ccb" open>
+<summary>Canada Child Benefit</summary>
+<div class="mrgn-tp-md">
+<p id="ccb-desc"></p>
+<form id="ccb-form" class="mrgn-bttm-lg" onsubmit="return false;">
+<fieldset>
+<legend>Your family information</legend>
+<div class="form-group">
+<label for="ccb-income">Adjusted family net income (AFNI)</label>
+<div class="input-group" style="max-width: 300px;">
+<span class="input-group-addon">$</span>
+<input type="number" class="form-control" id="ccb-income" value="55000" min="0" step="1000">
+</div>
+</div>
+<div class="form-group">
+<label>Children in your care</label>
+<div id="children-list">
+<div class="child-row row">
+<div class="col-xs-4 col-sm-3">
+<label class="wb-inv" for="child-age-0">Age of child 1</label>
+<div class="input-group">
+<input type="number" class="form-control" id="child-age-0" value="3" min="0" max="17" placeholder="Age">
+<span class="input-group-addon">yrs</span>
+</div>
+</div>
+<div class="col-xs-4 col-sm-3">
+<span class="form-control-static text-muted">Child 1</span>
+</div>
+</div>
+<div class="child-row row">
+<div class="col-xs-4 col-sm-3">
+<label class="wb-inv" for="child-age-1">Age of child 2</label>
+<div class="input-group">
+<input type="number" class="form-control" id="child-age-1" value="8" min="0" max="17" placeholder="Age">
+<span class="input-group-addon">yrs</span>
+</div>
+</div>
+<div class="col-xs-4 col-sm-3">
+<span class="form-control-static text-muted">Child 2</span>
+</div>
+</div>
+</div>
+<div class="mrgn-tp-sm">
+<button type="button" class="btn btn-sm btn-default" onclick="addChild()">+ Add child</button>
+<button type="button" class="btn btn-sm btn-default" onclick="removeChild()" id="btn-remove-child" style="display:inline;">- Remove</button>
+</div>
+</div>
+</fieldset>
+<button type="button" class="btn btn-primary mrgn-tp-md" onclick="calculateCCB()">Estimate my CCB</button>
+</form>
+<div id="ccb-result" class="result-box"></div>
+</div>
+</details>
+
+<!-- EI TAB -->
+<details id="tab-ei">
+<summary>Employment Insurance</summary>
+<div class="mrgn-tp-md">
+<p id="ei-desc"></p>
+<form id="ei-form" class="mrgn-bttm-lg" onsubmit="return false;">
+<fieldset>
+<legend>Your employment information</legend>
+<div class="form-group">
+<label for="ei-earnings">Average insurable weekly earnings</label>
+<div class="input-group" style="max-width: 300px;">
+<span class="input-group-addon">$</span>
+<input type="number" class="form-control" id="ei-earnings" value="900" min="0" step="50">
+</div>
+<p class="help-block">Divide your annual salary by 52 to get weekly earnings.</p>
+</div>
+</fieldset>
+<button type="button" class="btn btn-primary mrgn-tp-md" onclick="calculateEI()">Estimate my EI benefits</button>
+</form>
+<div id="ei-result" class="result-box"></div>
+</div>
+</details>
+
+<!-- OAS TAB -->
+<details id="tab-oas">
+<summary>Old Age Security</summary>
+<div class="mrgn-tp-md">
+<p id="oas-desc"></p>
+<form id="oas-form" class="mrgn-bttm-lg" onsubmit="return false;">
+<fieldset>
+<legend>Your personal information</legend>
+<div class="form-group">
+<label for="oas-age">Your age</label>
+<input type="number" class="form-control" id="oas-age" value="68" min="65" max="100" style="max-width: 150px;">
+</div>
+<div class="form-group">
+<label for="oas-years">Years of residence in Canada (after age 18)</label>
+<input type="number" class="form-control" id="oas-years" value="30" min="0" max="60" style="max-width: 150px;">
+</div>
+<div class="form-group">
+<label for="oas-income">Individual net income</label>
+<div class="input-group" style="max-width: 300px;">
+<span class="input-group-addon">$</span>
+<input type="number" class="form-control" id="oas-income" value="45000" min="0" step="1000">
+</div>
+</div>
+</fieldset>
+<button type="button" class="btn btn-primary mrgn-tp-md" onclick="calculateOAS()">Estimate my OAS pension</button>
+</form>
+<div id="oas-result" class="result-box"></div>
+</div>
+</details>
+
+</div>
+</div>
+
+<div class="well mrgn-tp-lg">
+<h2 class="h4 mrgn-tp-0">How this works</h2>
+<p>This estimator loads JSON files containing program rules, thresholds, and rates. The same JSON files power the <a href="../site/_site/en/canada-child-benefit/how-much.html">static Canada.ca-style page</a>, the REST API, and the LLM chatbot. Update one number in the JSON, and every channel reflects the change.</p>
+</div>
+
+<div class="pagedetails mrgn-tp-lg">
+<dl id="wb-dtmd">
+<dt>Date modified:</dt>
+<dd><time property="dateModified" id="date-modified">2026-04-14</time></dd>
+</dl>
+</div>
+</main>
+
+<footer id="wb-info">
+<div class="landscape">
+<nav class="container wb-navcurr">
+<h2 class="wb-inv">About government</h2>
+</nav>
+</div>
+<div class="brand">
+<div class="container">
+<div class="row">
+<nav class="col-md-10 ftr-urlt-lnk"></nav>
+<div class="col-xs-6 visible-sm visible-xs tofpg">
+<a href="#wb-cont">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a>
+</div>
+<div class="col-xs-6 col-md-2 text-right">
+<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/wmms-blk.svg" alt="Symbol of the Government of Canada">
+</div>
+</div>
+</div>
+</div>
+</footer>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/js/wet-boew.min.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/js/theme.min.js"></script>
+<script>
+// ─── Data loading ────────────────────────────────────────────────
+var programs = {};
+var JSON_BASE = "../programs";
+var FILES = ["canada-child-benefit.json","employment-insurance.json","old-age-security.json"];
+
+function loadPrograms() {
+  var loaded = 0;
+  FILES.forEach(function(f) {
+    fetch(JSON_BASE + "/" + f)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        programs[data.id] = data;
+        loaded++;
+        if (loaded === FILES.length) onDataReady();
+      })
+      .catch(function(err) {
+        document.querySelector(".alert").innerHTML =
+          '<p><strong>Error:</strong> Could not load ' + f + '. If running locally, use: <code>python -m http.server 3000</code> from the repo root, then open <code>http://localhost:3000/webapp/estimator.html</code></p>';
+      });
+  });
+}
+
+function params(pid) {
+  var p = {};
+  (programs[pid].amounts.parameters || []).forEach(function(param) { p[param.id] = param.value; });
+  return p;
+}
+
+function fmt(n) { return "$" + Number(n).toLocaleString("en-CA", {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtI(n) { return "$" + Number(n).toLocaleString("en-CA"); }
+
+function onDataReady() {
+  var ccb = programs["canada-child-benefit"];
+  var ei = programs["employment-insurance"];
+  var oas = programs["old-age-security"];
+  document.getElementById("ccb-desc").textContent = ccb.description.en;
+  document.getElementById("ei-desc").textContent = ei.description.en;
+  document.getElementById("oas-desc").textContent = oas.description.en;
+  // Update date modified to latest
+  var dates = [ccb.last_updated, ei.last_updated, oas.last_updated].sort().reverse();
+  document.getElementById("date-modified").textContent = dates[0];
+}
+
+loadPrograms();
+
+// ─── Children management ─────────────────────────────────────────
+var childCount = 2;
+function addChild() {
+  if (childCount >= 6) return;
+  var list = document.getElementById("children-list");
+  var div = document.createElement("div");
+  div.className = "child-row row";
+  div.innerHTML = '<div class="col-xs-4 col-sm-3">' +
+    '<label class="wb-inv" for="child-age-' + childCount + '">Age of child ' + (childCount+1) + '</label>' +
+    '<div class="input-group"><input type="number" class="form-control" id="child-age-' + childCount + '" value="0" min="0" max="17" placeholder="Age"><span class="input-group-addon">yrs</span></div>' +
+    '</div><div class="col-xs-4 col-sm-3"><span class="form-control-static text-muted">Child ' + (childCount+1) + '</span></div>';
+  list.appendChild(div);
+  childCount++;
+}
+function removeChild() {
+  if (childCount <= 1) return;
+  var list = document.getElementById("children-list");
+  list.removeChild(list.lastElementChild);
+  childCount--;
+}
+
+// ─── CCB Calculator ──────────────────────────────────────────────
+function calculateCCB() {
+  var p = params("canada-child-benefit");
+  var income = Number(document.getElementById("ccb-income").value) || 0;
+  var children = [];
+  for (var i = 0; i < childCount; i++) {
+    var el = document.getElementById("child-age-" + i);
+    children.push({age: Number(el.value) || 0});
+  }
+  var num = children.length;
+
+  // Step 1: max benefit
+  var totalMax = 0;
+  var underCount = 0, overCount = 0;
+  children.forEach(function(c) {
+    if (c.age < p.young_child_age_cutoff) { totalMax += p.max_annual_under_6; underCount++; }
+    else { totalMax += p.max_annual_6_to_17; overCount++; }
+  });
+
+  // Step 2: find tier
+  var table = programs["canada-child-benefit"].amounts.calculation.step_2_income_reduction.reduction_table;
+  var tier = null;
+  table.forEach(function(row) {
+    var nc = row.num_children;
+    if (typeof nc === "number" && nc === num) tier = row;
+    else if (typeof nc === "string" && nc.endsWith("+") && num >= parseInt(nc)) tier = row;
+  });
+  if (!tier) tier = table[table.length - 1];
+
+  // Step 3: reduction
+  var annual, bracket;
+  if (income <= p.income_threshold_1) {
+    annual = totalMax;
+    bracket = "below";
+  } else if (income <= p.income_threshold_2) {
+    annual = Math.max(0, totalMax - tier.rate_mid * (income - p.income_threshold_1));
+    bracket = "mid";
+  } else {
+    annual = Math.max(0, totalMax - tier.base_reduction - tier.rate_high * (income - p.income_threshold_2));
+    bracket = "high";
+  }
+  annual = Math.round(annual * 100) / 100;
+  var monthly = Math.round(annual / 12 * 100) / 100;
+
+  var html = '<div class="panel panel-primary"><div class="panel-heading"><h3 class="panel-title">Your estimated Canada Child Benefit</h3></div><div class="panel-body">' +
+    '<p class="result-amount text-primary">' + fmt(monthly) + ' <small>per month</small></p>' +
+    '<p class="text-muted">' + fmt(annual) + ' per year</p>' +
+    '<h4 class="mrgn-tp-md">How it was calculated</h4><ul>';
+  if (underCount > 0) html += '<li>' + underCount + ' child(ren) under 6 &mdash; max ' + fmtI(p.max_annual_under_6) + '/yr each</li>';
+  if (overCount > 0) html += '<li>' + overCount + ' child(ren) aged 6-17 &mdash; max ' + fmtI(p.max_annual_6_to_17) + '/yr each</li>';
+  html += '<li>Maximum before reduction: ' + fmt(totalMax) + '/yr</li>';
+  if (bracket === "below") {
+    html += '</ul><div class="alert alert-success mrgn-tp-md"><p>Your income is at or below ' + fmtI(p.income_threshold_1) + ' &mdash; you receive the maximum amount.</p></div>';
+  } else if (bracket === "mid") {
+    html += '</ul><div class="alert alert-warning mrgn-tp-md"><p>Your income of ' + fmtI(income) + ' is in the mid bracket (' + fmtI(p.income_threshold_1) + ' &ndash; ' + fmtI(p.income_threshold_2) + '). Benefit reduced at ' + (tier.rate_mid * 100) + '% of income above ' + fmtI(p.income_threshold_1) + '.</p></div>';
+  } else {
+    html += '</ul><div class="alert alert-warning mrgn-tp-md"><p>Your income of ' + fmtI(income) + ' exceeds ' + fmtI(p.income_threshold_2) + '. Higher reduction rate applies: ' + fmtI(tier.base_reduction) + ' + ' + (tier.rate_high * 100) + '% of income above ' + fmtI(p.income_threshold_2) + '.</p></div>';
+  }
+  html += '</div></div>';
+
+  var el = document.getElementById("ccb-result");
+  el.innerHTML = html;
+  el.className = "result-box active";
+}
+
+// ─── EI Calculator ───────────────────────────────────────────────
+function calculateEI() {
+  var p = params("employment-insurance");
+  var earnings = Number(document.getElementById("ei-earnings").value) || 0;
+  var rate = p.benefit_rate / 100;
+  var weekly = Math.min(rate * earnings, p.max_weekly_benefit);
+  weekly = Math.round(weekly * 100) / 100;
+  var biweekly = Math.round(weekly * 2 * 100) / 100;
+  var capped = weekly >= p.max_weekly_benefit;
+
+  var html = '<div class="panel panel-success"><div class="panel-heading"><h3 class="panel-title">Your estimated EI benefits</h3></div><div class="panel-body">' +
+    '<p class="result-amount" style="color:#2e7d32;">' + fmt(weekly) + ' <small>per week</small></p>' +
+    '<p class="text-muted">' + fmt(biweekly) + ' bi-weekly</p>' +
+    '<h4 class="mrgn-tp-md">How it was calculated</h4><ul>' +
+    '<li>' + p.benefit_rate + '% of your weekly earnings (' + fmtI(earnings) + ')</li>' +
+    '<li>Maximum weekly benefit: ' + fmtI(p.max_weekly_benefit) + '</li>' +
+    '<li>' + p.waiting_period_weeks + '-week waiting period before payments begin</li>' +
+    '<li>Benefits payable for ' + p.min_weeks_payable + ' to ' + p.max_weeks_payable + ' weeks (depends on region and hours)</li>' +
+    '</ul>';
+  if (capped) {
+    html += '<div class="alert alert-warning mrgn-tp-md"><p>You have reached the weekly maximum of ' + fmtI(p.max_weekly_benefit) + '.</p></div>';
+  }
+  html += '</div></div>';
+
+  var el = document.getElementById("ei-result");
+  el.innerHTML = html;
+  el.className = "result-box active";
+}
+
+// ─── OAS Calculator ──────────────────────────────────────────────
+function calculateOAS() {
+  var p = params("old-age-security");
+  var age = Number(document.getElementById("oas-age").value) || 0;
+  var years = Number(document.getElementById("oas-years").value) || 0;
+  var income = Number(document.getElementById("oas-income").value) || 0;
+
+  var maxPension = age >= p.senior_age_cutoff ? p.max_monthly_75_plus : p.max_monthly_65_to_74;
+  var proportion = Math.min(years / p.full_pension_years, 1.0);
+  var basePension = maxPension * proportion;
+  var pension;
+  if (income > p.clawback_threshold) {
+    var monthlyClawback = (p.clawback_rate / 100) * (income - p.clawback_threshold) / 12;
+    pension = Math.max(0, basePension - monthlyClawback);
+  } else {
+    pension = basePension;
+  }
+  pension = Math.round(pension * 100) / 100;
+  var annual = Math.round(pension * 12 * 100) / 100;
+  var fullOrPartial = years >= p.full_pension_years ? "full" : "partial";
+  var pctResidence = Math.round(proportion * 100);
+
+  var html = '<div class="panel" style="border-color:#7b1fa2;"><div class="panel-heading" style="background:#7b1fa2;color:#fff;"><h3 class="panel-title">Your estimated OAS pension</h3></div><div class="panel-body">' +
+    '<p class="result-amount" style="color:#7b1fa2;">' + fmt(pension) + ' <small>per month</small></p>' +
+    '<p class="text-muted">' + fmt(annual) + ' per year &mdash; ' + fullOrPartial + ' pension</p>' +
+    '<h4 class="mrgn-tp-md">How it was calculated</h4><ul>' +
+    '<li>Age bracket: ' + (age >= p.senior_age_cutoff ? "75+" : "65\u201374") + ' (max ' + fmt(maxPension) + '/mo)</li>' +
+    '<li>Residence: ' + years + ' of ' + p.full_pension_years + ' years (' + pctResidence + '%)</li>';
+  if (income > p.clawback_threshold) {
+    html += '</ul><div class="alert alert-warning mrgn-tp-md"><p>Income above ' + fmtI(p.clawback_threshold) + ' &mdash; ' + p.clawback_rate + '% recovery tax applied on excess.</p></div>';
+  } else {
+    html += '</ul><div class="alert alert-success mrgn-tp-md"><p>No recovery tax &mdash; income below ' + fmtI(p.clawback_threshold) + '.</p></div>';
+  }
+  if (pension === 0) {
+    html += '<div class="alert alert-danger"><p>Pension fully clawed back at this income level.</p></div>';
+  }
+  html += '</div></div>';
+
+  var el = document.getElementById("oas-result");
+  el.innerHTML = html;
+  el.className = "result-box active";
+}
+</script>
+</body>
+</html>
