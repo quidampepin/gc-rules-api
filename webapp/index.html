@@ -1,33 +1,100 @@
 <!DOCTYPE html>
-<html class="no-js" lang="en" dir="ltr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <title>GC Rules API — Experiment</title>
-<meta content="width=device-width,initial-scale=1" name="viewport">
-<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/theme.min.css">
-<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/messages.min.css">
-<noscript><link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/css/noscript.min.css"></noscript>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Reset */
+*, *:before, *:after { box-sizing: border-box; }
+body { margin: 0; background: #fff; font: 20px/1.4 'Open Sans', sans-serif; color: #333; }
+a { color: #043a70; text-decoration: underline; cursor: pointer; }
+a:hover, a:active { color: #000; }
+h1, h2, h3, h4 { font-family: 'Montserrat', sans-serif; color: #222; font-weight: bold; line-height: 1.5; margin: 1em 0 15px; }
+h1 { font-size: 44px; }
+h2 { font-size: 34px; }
+h3 { font-size: 22px; }
+p { margin: 20px 0; }
+code { font-family: 'Bitstream Vera Sans Mono', 'Courier', monospace; font-size: 0.85em; background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+pre { background: #f5f5f5; padding: 16px 20px; border-radius: 4px; overflow-x: auto; font-size: 0.8em; line-height: 1.5; margin: 20px 0; border: 1px solid #e5e5e5; }
+pre code { background: none; padding: 0; }
+img { max-width: 100%; }
+ul, ol { margin: 15px 0; padding-left: 30px; }
+ul { list-style-type: disc; }
+li { margin-bottom: 0.5rem; }
+
+/* Layout */
+.container { margin: 0 auto; max-width: 1000px; padding: 0 20px; width: 100%; }
+.masthead { background-color: #eee; padding: 14px 0; border-bottom: 2px solid #eee; }
+.site-name { margin: 0; font-family: 'Open Sans', sans-serif; font-weight: 700; font-size: 36px; color: #333; }
+.site-name a { color: inherit; text-decoration: none; }
+nav.top-nav { font-family: 'Open Sans', sans-serif; font-weight: 600; font-size: 18px; margin-top: 4px; }
+nav.top-nav a { margin-right: 20px; color: #333; text-decoration: none; letter-spacing: 1px; }
+nav.top-nav a:hover { border-bottom: 3px solid #333; }
+
+/* Entry content */
+.entry { max-width: 65ch; }
+.entry p { font-size: 1.05rem; line-height: 1.6; }
+
+/* Disclaimer */
+.disclaimer { background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px; margin: 24px 0; border-radius: 0 4px 4px 0; font-size: 0.9em; }
+
+/* Channel cards */
+.channels { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+@media (max-width: 700px) { .channels { grid-template-columns: 1fr; } }
+.card { display: flex; flex-direction: column; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; background: #fff; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease; }
+.card:hover { transform: translateY(-2px); border-color: #d0d0d0; box-shadow: 0 8px 20px rgba(0,0,0,0.07); }
+.card h3 { margin: 0 0 0.5rem 0; font-size: 1.2rem; }
+.card p { margin: 0 0 1rem 0; font-size: 0.95rem; line-height: 1.5; color: #444; flex-grow: 1; }
+.card .cta { margin-top: auto; font-weight: 600; font-size: 0.95rem; }
+.card .cta a { text-decoration: none; }
+.card .cta a:hover { text-decoration: underline; }
+.card--primary { border-color: #043a70; border-width: 2px; }
+.card code { font-size: 0.82em; }
+
+/* Program list */
+.programs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; }
+@media (max-width: 700px) { .programs-grid { grid-template-columns: 1fr; } }
+.program-card { border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; }
+.program-card h3 { margin: 0 0 0.4rem 0; font-size: 1rem; }
+.program-card p { margin: 0; font-size: 0.85rem; color: #555; line-height: 1.4; }
+.program-meta { margin-top: 0.6rem; font-size: 0.78rem; color: #888; }
+
+/* Architecture diagram */
+.arch { font-family: 'Bitstream Vera Sans Mono', 'Courier', monospace; font-size: 0.82em; line-height: 1.6; }
+
+/* Footer */
+.site-footer { margin-top: 50px; background-color: #eee; padding: 20px 0; font-size: 16px; color: #666; }
+.site-footer a { color: #555; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 32px; }
+  h2 { font-size: 26px; }
+  .site-name { font-size: 28px; }
+}
+</style>
 </head>
-<body vocab="http://schema.org/" typeof="WebPage">
-<nav><ul id="wb-tphp"><li class="wb-slc"><a class="wb-sl" href="#wb-cont">Skip to main content</a></li></ul></nav>
-<header>
-<div id="wb-bnr" class="container">
-<div class="row">
-<div class="brand col-xs-9 col-sm-5 col-md-4" property="publisher" typeof="GovernmentOrganization">
-<a href="https://www.canada.ca/en.html" property="url">
-<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/sig-blk-en.svg" alt="Government of Canada" property="logo">
-</a>
-</div>
-</div>
-</div>
-</header>
-<main property="mainContentOfPage" class="container" typeof="WebPageElement">
+<body>
 
-<h1 property="name" id="wb-cont" class="gc-thickline">GC Rules API — Experiment</h1>
-<p class="mrgn-tp-md">A proof of concept exploring what happens when Government of Canada program rules live as structured data instead of scattered across web pages, PDFs, and internal systems.</p>
+<div class="masthead">
+<div class="container">
+<span class="site-name"><a href="https://www.davidpepin.ca/en/">David Pepin</a></span>
+<nav class="top-nav">
+<a href="https://www.davidpepin.ca/en/">Blog</a>
+<a href="#">Experiment</a>
+</nav>
+</div>
+</div>
 
-<div class="alert alert-warning">
-<p><strong>Not an official Government of Canada product.</strong> This is a personal experiment for demonstration and discussion purposes only. The rules and amounts may not be current.</p>
+<div class="container">
+<article class="entry">
+
+<h1>GC Rules API</h1>
+<p>A proof of concept exploring what happens when Government of Canada program rules live as structured data instead of scattered across web pages, PDFs, and internal systems.</p>
+
+<div class="disclaimer">
+<strong>Not an official Government of Canada product.</strong> This is a personal experiment for demonstration and discussion purposes only. The rules and amounts may not be current.
 </div>
 
 <h2>The idea</h2>
@@ -36,57 +103,40 @@
 <h2>Four channels, one source</h2>
 <p>The same JSON files (<code>programs/*.json</code>) power all four of these:</p>
 
-<div class="row mrgn-tp-lg">
-<div class="col-md-6">
-<section class="panel panel-primary">
-<header class="panel-heading"><h3 class="panel-title">Benefits Estimator</h3></header>
-<div class="panel-body">
+</article>
+
+<div class="channels">
+<div class="card card--primary">
+<h3>Benefits Estimator</h3>
 <p>An interactive calculator for CCB, EI, and OAS. Enter your situation, get your estimated amounts. All calculation logic runs in your browser — reads the JSON, applies the rules, shows the result.</p>
-<p><a href="estimator.html" class="btn btn-primary">Try the estimator</a></p>
+<div class="cta"><a href="estimator.html">Try the estimator →</a></div>
 </div>
-</section>
+<div class="card card--primary">
+<h3>API Explorer</h3>
+<p>Browse the REST API endpoints: list programs, read parameters, check eligibility, calculate benefits. See the exact JSON responses — simulated client-side, identical output to the real FastAPI server.</p>
+<div class="cta"><a href="api.html">Explore the API →</a></div>
 </div>
-<div class="col-md-6">
-<section class="panel panel-primary">
-<header class="panel-heading"><h3 class="panel-title">API Explorer</h3></header>
-<div class="panel-body">
-<p>Browse the REST API endpoints: list programs, read parameters, check eligibility, calculate benefits. See the exact JSON responses. Simulated client-side — identical output to the real FastAPI server.</p>
-<p><a href="api.html" class="btn btn-primary">Explore the API</a></p>
+<div class="card">
+<h3>Static Canada.ca page</h3>
+<p>A Canada.ca-style "How much you can get" page for the Canada Child Benefit. Generated by a Python script that reads the JSON — every amount, threshold, and example comes from the data.</p>
+<div class="cta"><a href="../site/_site/en/canada-child-benefit/how-much.html">View the static page →</a></div>
 </div>
-</section>
+<div class="card">
+<h3>LLM Chatbot</h3>
+<p>Two chatbots — local (Ollama) and cloud (Claude API) — that answer questions by reading Markdown fact sheets derived from the JSON. No hallucinated numbers, because the model only sees the actual data.</p>
+<div class="cta"><code>python chat.py</code>&ensp;or&ensp;<code>python chat_claude.py</code></div>
 </div>
 </div>
 
-<div class="row">
-<div class="col-md-6">
-<section class="panel panel-default">
-<header class="panel-heading"><h3 class="panel-title">Static Canada.ca page</h3></header>
-<div class="panel-body">
-<p>A Canada.ca-style "How much you can get" page for the Canada Child Benefit. Generated by a Python script that reads the JSON file — every amount, threshold, and example comes from the data.</p>
-<p><a href="../site/_site/en/canada-child-benefit/how-much.html" class="btn btn-default">View the static page</a></p>
-</div>
-</section>
-</div>
-<div class="col-md-6">
-<section class="panel panel-default">
-<header class="panel-heading"><h3 class="panel-title">LLM Chatbot</h3></header>
-<div class="panel-body">
-<p>A local chatbot (Ollama) that answers questions about programs by reading Markdown fact sheets derived from the JSON. No hallucinated numbers — the model only sees the actual data. Requires a local setup.</p>
-<p><code>python chat.py</code></p>
-</div>
-</section>
-</div>
-</div>
+<article class="entry">
 
 <h2>Programs included</h2>
-<div class="row" id="programs-list">
-<p class="text-muted mrgn-lft-md">Loading program data...</p>
+<div class="programs-grid" id="programs-list">
+<p style="color:#999;">Loading program data...</p>
 </div>
 
 <h2>How to run locally</h2>
-<p>From the repository root:</p>
-<pre>
-# Serve the static files (webapp, static site, JSON)
+<pre><code># Serve the static files (webapp, static site, JSON)
 python -m http.server 3000
 # Open http://localhost:3000/webapp/
 
@@ -95,39 +145,33 @@ pip install -r requirements.txt
 uvicorn api.main:app --reload --port 8000
 # Open http://localhost:8000/docs for Swagger UI
 
-# Or chat with the LLM
+# Chat with a local LLM
 pip install ollama
 ollama pull qwen2.5:7b-instruct-q4_K_M
 python chat.py
-</pre>
+
+# Chat with Claude (needs API key in secrets/config.json)
+pip install anthropic
+python chat_claude.py</code></pre>
 
 <h2>The architecture</h2>
-<pre>
-programs/*.json          ← Single source of truth (rules, rates, thresholds, examples)
+<pre class="arch">programs/*.json          ← Single source of truth (rules, rates, thresholds, examples)
     │
     ├── webapp/          ← This site (estimator + API explorer, client-side JS)
     ├── site/build.py    ← Static Canada.ca HTML pages (generated)
-    ├── md_export.py     ← Markdown fact sheets → LLM chatbot (chat.py)
-    └── api/main.py      ← REST API (FastAPI)
-</pre>
+    ├── md_export.py     ← Markdown fact sheets → LLM chatbot (chat.py, chat_claude.py)
+    └── api/main.py      ← REST API (FastAPI)</pre>
 <p>Change a number in the JSON, rebuild, and all four channels reflect the change.</p>
 
-<div class="pagedetails mrgn-tp-lg">
-<dl id="wb-dtmd"><dt>Date modified:</dt><dd><time property="dateModified">2026-04-14</time></dd></dl>
+</article>
 </div>
-</main>
 
-<footer id="wb-info">
-<div class="landscape"><nav class="container wb-navcurr"><h2 class="wb-inv">About government</h2></nav></div>
-<div class="brand"><div class="container"><div class="row">
-<nav class="col-md-10 ftr-urlt-lnk"></nav>
-<div class="col-xs-6 visible-sm visible-xs tofpg"><a href="#wb-cont">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a></div>
-<div class="col-xs-6 col-md-2 text-right"><img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/wmms-blk.svg" alt="Symbol of the Government of Canada"></div>
-</div></div></div>
-</footer>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.js"></script>
-<script src="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/js/wet-boew.min.js"></script>
-<script src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/js/theme.min.js"></script>
+<div class="site-footer">
+<div class="container">
+<a href="https://www.davidpepin.ca/en/">davidpepin.ca</a> · Experiment · Not an official Government of Canada product
+</div>
+</div>
+
 <script>
 var JSON_BASE = "../programs";
 var FILES = ["canada-child-benefit.json","employment-insurance.json","old-age-security.json"];
@@ -150,14 +194,11 @@ function renderPrograms() {
   var html = "";
   allPrograms.forEach(function(p) {
     var paramCount = (p.amounts && p.amounts.parameters) ? p.amounts.parameters.length : 0;
-    html += '<div class="col-md-4"><section class="panel panel-default">' +
-      '<header class="panel-heading"><h3 class="panel-title">' + p.name.en + '</h3></header>' +
-      '<div class="panel-body"><p class="small">' + p.description.en + '</p>' +
-      '<dl class="dl-horizontal small">' +
-      '<dt>Status</dt><dd>' + p.status + '</dd>' +
-      '<dt>Parameters</dt><dd>' + paramCount + '</dd>' +
-      '<dt>Updated</dt><dd>' + p.last_updated + '</dd>' +
-      '</dl></div></section></div>';
+    html += '<div class="program-card">' +
+      '<h3>' + p.name.en + '</h3>' +
+      '<p>' + p.description.en + '</p>' +
+      '<div class="program-meta">' + p.status + ' · ' + paramCount + ' parameters · updated ' + p.last_updated + '</div>' +
+      '</div>';
   });
   document.getElementById("programs-list").innerHTML = html;
 }
