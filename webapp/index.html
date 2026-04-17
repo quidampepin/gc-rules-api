@@ -100,8 +100,8 @@ nav.top-nav a:hover { border-bottom: 3px solid #333; }
 <h2>The idea</h2>
 <p>Encode each program's rules, thresholds, rates, and examples once — in machine-readable JSON files — then generate every downstream artefact from that single source. Update one number in the JSON, and every channel updates automatically.</p>
 
-<h2>Four channels, one source</h2>
-<p>The same JSON files (<code>programs/*.json</code>) power all four of these:</p>
+<h2>Five channels, one source</h2>
+<p>The same JSON files (<code>programs/*.json</code>) power all five of these:</p>
 
 </article>
 
@@ -125,6 +125,11 @@ nav.top-nav a:hover { border-bottom: 3px solid #333; }
 <h3>LLM Chatbot</h3>
 <p>Two chatbots — local (Ollama) and cloud (Claude API) — that answer questions by reading Markdown fact sheets derived from the JSON. No hallucinated numbers, because the model only sees the actual data.</p>
 <div class="cta"><code>python chat.py</code>&ensp;or&ensp;<code>python chat_claude.py</code></div>
+</div>
+<div class="card card--primary">
+<h3>Program Editor</h3>
+<p>A web form for policy analysts to update program parameters — rates, thresholds, amounts — without editing JSON. Preview changes as a diff, then download the updated file.</p>
+<div class="cta"><a href="editor.html">Open the editor →</a></div>
 </div>
 </div>
 
@@ -157,10 +162,12 @@ python chat_claude.py</code></pre>
 <h2>The architecture</h2>
 <pre class="arch">programs/*.json          ← Single source of truth (rules, rates, thresholds, examples)
     │
-    ├── webapp/          ← This site (estimator + API explorer, client-side JS)
+    ├── webapp/          ← This site (estimator + API explorer + editor, client-side JS)
     ├── site/build.py    ← Static Canada.ca HTML pages (generated)
     ├── md_export.py     ← Markdown fact sheets → LLM chatbot (chat.py, chat_claude.py)
-    └── api/main.py      ← REST API (FastAPI)</pre>
+    └── api/main.py      ← REST API (FastAPI)
+
+    ↑ editor.html        ← Policy analysts update parameters here, download valid JSON</pre>
 <p>Change a number in the JSON, rebuild, and all four channels reflect the change.</p>
 
 </article>

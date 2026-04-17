@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>Program Editor - GC Rules API Experiment</title>
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/theme.min.css">
+<link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/css/messages.min.css">
+<noscript><link rel="stylesheet" href="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/css/noscript.min.css"></noscript>
+<style>
+  /* Editor-specific styles */
+  .editor-section { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 20px 24px; margin-bottom: 20px; }
+  .editor-section h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+
+  .param-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; }
+  .param-row:last-child { border-bottom: none; }
+  .param-label { flex: 1 1 280px; min-width: 200px; }
+  .param-label label { font-weight: 600; display: block; margin-bottom: 2px; }
+  .param-label .param-id { font-family: monospace; font-size: 12px; color: #888; }
+  .param-input { flex: 0 0 180px; }
+  .param-input input { width: 100%; }
+  .param-unit { flex: 0 0 80px; font-size: 13px; color: #555; padding-top: 8px; }
+  .param-date { flex: 0 0 140px; }
+  .param-date input { width: 100%; font-size: 13px; }
+
+  /* Reduction table */
+  .reduction-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  .reduction-table th { background: #f5f5f5; text-align: left; padding: 8px 10px; font-size: 13px; border: 1px solid #ddd; }
+  .reduction-table td { padding: 6px 10px; border: 1px solid #ddd; }
+  .reduction-table input { width: 100%; border: 1px solid #ccc; border-radius: 3px; padding: 4px 6px; font-size: 14px; }
+
+  /* Metadata fields */
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+  @media (max-width: 640px) { .meta-grid { grid-template-columns: 1fr; } }
+  .meta-field label { font-weight: 600; display: block; margin-bottom: 4px; font-size: 14px; }
+  .meta-field input, .meta-field select { width: 100%; }
+
+  /* Validation */
+  input.invalid { border-color: #d3080c !important; background: #fff5f5; }
+  .validation-msg { color: #d3080c; font-size: 12px; margin-top: 2px; }
+
+  /* Actions bar */
+  .actions-bar { position: sticky; bottom: 0; background: #fff; border-top: 2px solid #eee; padding: 12px 0; margin: 0 -15px; padding-left: 15px; padding-right: 15px; z-index: 100; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .actions-bar .spacer { flex: 1; }
+  .change-count { font-size: 13px; color: #555; }
+  .change-count strong { color: #d3080c; }
+
+  /* Diff modal */
+  .diff-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+  .diff-overlay.active { display: flex; align-items: center; justify-content: center; }
+  .diff-modal { background: #fff; border-radius: 8px; max-width: 800px; width: 90%; max-height: 80vh; display: flex; flex-direction: column; }
+  .diff-modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+  .diff-modal-header h3 { margin: 0; }
+  .diff-modal-body { padding: 16px 20px; overflow: auto; flex: 1; }
+  .diff-modal-footer { padding: 12px 20px; border-top: 1px solid #eee; text-align: right; }
+  pre.diff-output { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 4px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; max-height: 50vh; overflow: auto; }
+  .diff-add { color: #4ec9b0; }
+  .diff-remove { color: #f48771; }
+  .diff-key { color: #9cdcfe; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 80px; right: 24px; background: #333; color: #fff; padding: 12px 20px; border-radius: 6px; font-size: 14px; z-index: 300; opacity: 0; transition: opacity 200ms; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body vocab="http://schema.org/" typeof="WebPage">
+<nav><ul id="wb-tphp"><li class="wb-slc"><a class="wb-sl" href="#wb-cont">Skip to main content</a></li></ul></nav>
+<header>
+<div id="wb-bnr" class="container">
+<div class="row">
+<div class="brand col-xs-9 col-sm-5 col-md-4" property="publisher" typeof="GovernmentOrganization">
+<a href="https://www.canada.ca/en.html" property="url">
+<img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/sig-blk-en.svg" alt="Government of Canada" property="logo">
+</a>
+</div>
+</div>
+</div>
+<nav id="wb-bc" property="breadcrumb">
+<h2>You are here:</h2>
+<div class="container">
+<ol class="breadcrumb">
+<li><a href="index.html">GC Rules API Experiment</a></li>
+</ol>
+</div>
+</nav>
+</header>
+<main property="mainContentOfPage" class="container" typeof="WebPageElement">
+
+<div class="alert alert-info mrgn-bttm-lg">
+<p><strong>Proof of concept:</strong> This editor lets policy analysts update program parameters (rates, thresholds, amounts) without editing JSON directly. Changes are previewed as a diff before downloading the updated file.</p>
+</div>
+
+<h1 property="name" id="wb-cont" class="gc-thickline">Program Editor</h1>
+<p>Select a program, update the values, and download the updated JSON. Every field here maps directly to a parameter in the program's JSON file — the single source of truth that powers the estimator, API, and static pages.</p>
+
+<!-- Program selector -->
+<div class="form-group mrgn-bttm-lg">
+<label for="program-select"><strong>Program</strong></label>
+<select class="form-control" id="program-select" style="max-width:400px;" onchange="loadProgram()">
+<option value="">— Select a program —</option>
+</select>
+</div>
+
+<div id="editor-content" style="display:none;">
+
+<!-- Metadata -->
+<div class="editor-section" id="section-meta">
+<h3>Program metadata</h3>
+<div class="meta-grid" id="meta-fields"></div>
+</div>
+
+<!-- Parameters -->
+<div class="editor-section" id="section-params">
+<h3>Parameters <small class="text-muted" style="font-weight:normal;">(rates, thresholds, amounts)</small></h3>
+<p class="text-muted" style="font-size:13px; margin-top:-4px;">These are the numbers that drive all calculations. Update a value here, download the JSON, and every channel (estimator, API, static pages) will reflect the change.</p>
+<div id="params-list"></div>
+</div>
+
+<!-- Reduction table (CCB only) -->
+<div class="editor-section" id="section-reduction" style="display:none;">
+<h3>Income reduction table</h3>
+<p class="text-muted" style="font-size:13px; margin-top:-4px;">Reduction rates applied when family income exceeds the first threshold. Rates vary by number of children.</p>
+<table class="reduction-table" id="reduction-table">
+<thead>
+<tr>
+<th># Children</th>
+<th>Mid-bracket rate</th>
+<th>High-bracket rate</th>
+<th>Base reduction ($)</th>
+</tr>
+</thead>
+<tbody id="reduction-body"></tbody>
+</table>
+</div>
+
+<!-- Actions -->
+<div class="actions-bar">
+<span class="change-count" id="change-count"></span>
+<span class="spacer"></span>
+<button class="btn btn-default" onclick="resetForm()">
+<span class="glyphicon glyphicon-refresh"></span> Reset
+</button>
+<button class="btn btn-default" onclick="showDiff()">
+<span class="glyphicon glyphicon-transfer"></span> Preview changes
+</button>
+<button class="btn btn-primary" onclick="downloadJSON()">
+<span class="glyphicon glyphicon-download-alt"></span> Download JSON
+</button>
+</div>
+</div>
+
+<!-- Diff modal -->
+<div class="diff-overlay" id="diff-overlay" onclick="closeDiff(event)">
+<div class="diff-modal">
+<div class="diff-modal-header">
+<h3>Changes preview</h3>
+<button class="btn btn-default btn-sm" onclick="document.getElementById('diff-overlay').classList.remove('active')">Close</button>
+</div>
+<div class="diff-modal-body">
+<pre class="diff-output" id="diff-output"></pre>
+</div>
+<div class="diff-modal-footer">
+<button class="btn btn-primary" onclick="document.getElementById('diff-overlay').classList.remove('active'); downloadJSON();">
+<span class="glyphicon glyphicon-download-alt"></span> Download JSON
+</button>
+</div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="pagedetails mrgn-tp-lg">
+<dl id="wb-dtmd"><dt>Date modified:</dt><dd><time property="dateModified">2026-04-17</time></dd></dl>
+</div>
+</main>
+
+<footer id="wb-info">
+<div class="landscape"><nav class="container wb-navcurr"><h2 class="wb-inv">About government</h2></nav></div>
+<div class="brand"><div class="container"><div class="row">
+<nav class="col-md-10 ftr-urlt-lnk"></nav>
+<div class="col-xs-6 visible-sm visible-xs tofpg"><a href="#wb-cont">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a></div>
+<div class="col-xs-6 col-md-2 text-right"><img src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/assets/wmms-blk.svg" alt="Symbol of the Government of Canada"></div>
+</div></div></div>
+</footer>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/wet-boew/js/wet-boew.min.js"></script>
+<script src="https://wet-boew.github.io/themes-dist/GCWeb/GCWeb/js/theme.min.js"></script>
+<script>
+// ─── Data ────────────────────────────────────────────────────────
+var JSON_BASE = "../programs";
+var FILES = ["canada-child-benefit.json","employment-insurance.json","old-age-security.json"];
+var programs = {};       // loaded originals (deep copies for comparison)
+var originalJSON = {};   // stringified originals for diff
+var currentPid = null;
+
+// Load all programs
+FILES.forEach(function(f) {
+  fetch(JSON_BASE + "/" + f)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      programs[data.id] = data;
+      originalJSON[data.id] = JSON.stringify(data, null, 2);
+      var sel = document.getElementById("program-select");
+      var opt = document.createElement("option");
+      opt.value = data.id;
+      opt.textContent = data.name.en;
+      sel.appendChild(opt);
+    });
+});
+
+// ─── Load a program into the editor ─────────────────────────────
+function loadProgram() {
+  var pid = document.getElementById("program-select").value;
+  if (!pid) {
+    document.getElementById("editor-content").style.display = "none";
+    return;
+  }
+  currentPid = pid;
+  var prog = programs[pid];
+
+  document.getElementById("editor-content").style.display = "block";
+
+  // Metadata
+  renderMeta(prog);
+
+  // Parameters
+  renderParams(prog);
+
+  // Reduction table (CCB only)
+  var hasReduction = pid === "canada-child-benefit";
+  document.getElementById("section-reduction").style.display = hasReduction ? "block" : "none";
+  if (hasReduction) renderReductionTable(prog);
+
+  updateChangeCount();
+}
+
+// ─── Metadata ───────────────────────────────────────────────────
+function renderMeta(prog) {
+  var container = document.getElementById("meta-fields");
+  container.innerHTML = "";
+
+  var fields = [
+    { key: "last_updated", label: "Last updated", type: "date", path: ["last_updated"] },
+    { key: "effective_date", label: "Effective date", type: "date", path: ["effective_date"] },
+    { key: "next_review_date", label: "Next review date", type: "date", path: ["next_review_date"] },
+    { key: "status", label: "Status", type: "select", options: ["active","draft","archived"], path: ["status"] },
+  ];
+
+  fields.forEach(function(f) {
+    var val = getNestedValue(prog, f.path) || "";
+    var div = document.createElement("div");
+    div.className = "meta-field";
+
+    var lbl = document.createElement("label");
+    lbl.textContent = f.label;
+    lbl.setAttribute("for", "meta-" + f.key);
+    div.appendChild(lbl);
+
+    var input;
+    if (f.type === "select") {
+      input = document.createElement("select");
+      input.className = "form-control input-sm";
+      f.options.forEach(function(o) {
+        var opt = document.createElement("option");
+        opt.value = o; opt.textContent = o;
+        if (o === val) opt.selected = true;
+        input.appendChild(opt);
+      });
+    } else {
+      input = document.createElement("input");
+      input.type = f.type === "date" ? "date" : "text";
+      input.className = "form-control input-sm";
+      input.value = val;
+    }
+    input.id = "meta-" + f.key;
+    input.setAttribute("data-path", JSON.stringify(f.path));
+    input.addEventListener("change", function() {
+      setNestedValue(programs[currentPid], f.path, this.value);
+      updateChangeCount();
+    });
+    div.appendChild(input);
+    container.appendChild(div);
+  });
+}
+
+// ─── Parameters ─────────────────────────────────────────────────
+function renderParams(prog) {
+  var container = document.getElementById("params-list");
+  container.innerHTML = "";
+  var params = (prog.amounts && prog.amounts.parameters) || [];
+
+  params.forEach(function(param, idx) {
+    var row = document.createElement("div");
+    row.className = "param-row";
+
+    // Label
+    var labelDiv = document.createElement("div");
+    labelDiv.className = "param-label";
+    var lbl = document.createElement("label");
+    lbl.textContent = param.label.en;
+    lbl.setAttribute("for", "param-" + param.id);
+    labelDiv.appendChild(lbl);
+    var idSpan = document.createElement("span");
+    idSpan.className = "param-id";
+    idSpan.textContent = param.id;
+    labelDiv.appendChild(idSpan);
+    row.appendChild(labelDiv);
+
+    // Value input
+    var inputDiv = document.createElement("div");
+    inputDiv.className = "param-input";
+    var input = document.createElement("input");
+    input.type = "number";
+    input.className = "form-control input-sm";
+    input.id = "param-" + param.id;
+    input.value = param.value;
+    input.step = getStep(param);
+    if (param.unit === "percent") {
+      input.min = "0";
+      input.max = "100";
+    }
+    input.addEventListener("change", function() {
+      var val = parseFloat(this.value);
+      if (isNaN(val)) {
+        this.classList.add("invalid");
+        return;
+      }
+      this.classList.remove("invalid");
+      params[idx].value = val;
+      updateChangeCount();
+    });
+    inputDiv.appendChild(input);
+    row.appendChild(inputDiv);
+
+    // Unit
+    var unitDiv = document.createElement("div");
+    unitDiv.className = "param-unit";
+    unitDiv.textContent = formatUnit(param.unit);
+    row.appendChild(unitDiv);
+
+    // Effective date
+    if (param.effective_date) {
+      var dateDiv = document.createElement("div");
+      dateDiv.className = "param-date";
+      var dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.className = "form-control input-sm";
+      dateInput.value = param.effective_date;
+      dateInput.title = "Effective date";
+      dateInput.addEventListener("change", function() {
+        params[idx].effective_date = this.value;
+        updateChangeCount();
+      });
+      dateDiv.appendChild(dateInput);
+      row.appendChild(dateDiv);
+    }
+
+    container.appendChild(row);
+  });
+}
+
+// ─── Reduction table (CCB) ──────────────────────────────────────
+function renderReductionTable(prog) {
+  var tbody = document.getElementById("reduction-body");
+  tbody.innerHTML = "";
+  var table = prog.amounts.calculation.step_2_income_reduction.reduction_table;
+
+  table.forEach(function(row, idx) {
+    var tr = document.createElement("tr");
+
+    // Num children (read-only)
+    var tdN = document.createElement("td");
+    tdN.textContent = row.num_children;
+    tdN.style.fontWeight = "600";
+    tr.appendChild(tdN);
+
+    // rate_mid
+    tr.appendChild(makeTableInput(row.rate_mid, function(val) {
+      table[idx].rate_mid = val;
+      updateChangeCount();
+    }, "0.001"));
+
+    // rate_high
+    tr.appendChild(makeTableInput(row.rate_high, function(val) {
+      table[idx].rate_high = val;
+      updateChangeCount();
+    }, "0.001"));
+
+    // base_reduction
+    tr.appendChild(makeTableInput(row.base_reduction, function(val) {
+      table[idx].base_reduction = val;
+      updateChangeCount();
+    }, "1"));
+
+    tbody.appendChild(tr);
+  });
+}
+
+function makeTableInput(value, onChange, step) {
+  var td = document.createElement("td");
+  var input = document.createElement("input");
+  input.type = "number";
+  input.value = value;
+  input.step = step || "any";
+  input.addEventListener("change", function() {
+    var v = parseFloat(this.value);
+    if (isNaN(v)) { this.classList.add("invalid"); return; }
+    this.classList.remove("invalid");
+    onChange(v);
+  });
+  td.appendChild(input);
+  return td;
+}
+
+// ─── Helpers ────────────────────────────────────────────────────
+function getNestedValue(obj, path) {
+  var cur = obj;
+  for (var i = 0; i < path.length; i++) {
+    if (cur == null) return undefined;
+    cur = cur[path[i]];
+  }
+  return cur;
+}
+
+function setNestedValue(obj, path, value) {
+  var cur = obj;
+  for (var i = 0; i < path.length - 1; i++) {
+    cur = cur[path[i]];
+  }
+  cur[path[path.length - 1]] = value;
+}
+
+function getStep(param) {
+  if (param.unit === "percent") {
+    return param.value < 1 ? "0.1" : "1";
+  }
+  if (param.unit === "dollars") {
+    return param.value % 1 !== 0 ? "0.01" : "1";
+  }
+  return "1";
+}
+
+function formatUnit(unit) {
+  var map = { dollars: "$", percent: "%", years: "yrs", weeks: "wks", months: "mo", hours: "hrs", days: "days" };
+  return map[unit] || unit || "";
+}
+
+// ─── Change tracking ────────────────────────────────────────────
+function updateChangeCount() {
+  if (!currentPid) return;
+  var current = JSON.stringify(programs[currentPid], null, 2);
+  var original = originalJSON[currentPid];
+  var changes = countChanges(original, current);
+  var el = document.getElementById("change-count");
+  if (changes === 0) {
+    el.innerHTML = "No changes";
+  } else {
+    el.innerHTML = "<strong>" + changes + " change" + (changes > 1 ? "s" : "") + "</strong> pending";
+  }
+}
+
+function countChanges(a, b) {
+  if (a === b) return 0;
+  var objA = JSON.parse(a);
+  var objB = JSON.parse(b);
+  return deepCountDiffs(objA, objB);
+}
+
+function deepCountDiffs(a, b) {
+  if (a === b) return 0;
+  if (typeof a !== typeof b) return 1;
+  if (typeof a !== "object" || a === null || b === null) return a !== b ? 1 : 0;
+  if (Array.isArray(a) !== Array.isArray(b)) return 1;
+
+  var count = 0;
+  var keys = Object.keys(a).concat(Object.keys(b)).filter(function(k, i, arr) { return arr.indexOf(k) === i; });
+  keys.forEach(function(k) {
+    if (!(k in a) || !(k in b)) { count++; }
+    else { count += deepCountDiffs(a[k], b[k]); }
+  });
+  return count;
+}
+
+// ─── Diff view ──────────────────────────────────────────────────
+function showDiff() {
+  if (!currentPid) return;
+  var current = JSON.stringify(programs[currentPid], null, 2);
+  var original = originalJSON[currentPid];
+
+  if (current === original) {
+    toast("No changes to preview");
+    return;
+  }
+
+  var html = buildDiffHTML(original, current);
+  document.getElementById("diff-output").innerHTML = html;
+  document.getElementById("diff-overlay").classList.add("active");
+}
+
+function buildDiffHTML(oldStr, newStr) {
+  var oldLines = oldStr.split("\n");
+  var newLines = newStr.split("\n");
+  var html = "";
+
+  // Simple line-by-line diff
+  var maxLen = Math.max(oldLines.length, newLines.length);
+  var oldIdx = 0, newIdx = 0;
+  var output = [];
+
+  // Find changed lines using a simple approach:
+  // Walk both arrays, output matching lines as-is, mismatches as remove+add
+  while (oldIdx < oldLines.length || newIdx < newLines.length) {
+    var oldLine = oldIdx < oldLines.length ? oldLines[oldIdx] : null;
+    var newLine = newIdx < newLines.length ? newLines[newIdx] : null;
+
+    if (oldLine === newLine) {
+      // Context — only show if near a change
+      output.push({ type: "ctx", line: escapeHtml(oldLine || "") });
+      oldIdx++; newIdx++;
+    } else {
+      // Look ahead to find resync point
+      var found = false;
+      for (var look = 1; look <= 3; look++) {
+        if (oldIdx + look < oldLines.length && oldLines[oldIdx + look] === newLines[newIdx]) {
+          // Old has extra lines
+          for (var r = 0; r < look; r++) {
+            output.push({ type: "del", line: escapeHtml(oldLines[oldIdx + r]) });
+          }
+          oldIdx += look;
+          found = true;
+          break;
+        }
+        if (newIdx + look < newLines.length && newLines[newIdx + look] === oldLines[oldIdx]) {
+          // New has extra lines
+          for (var a = 0; a < look; a++) {
+            output.push({ type: "add", line: escapeHtml(newLines[newIdx + a]) });
+          }
+          newIdx += look;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        if (oldLine !== null) { output.push({ type: "del", line: escapeHtml(oldLine) }); oldIdx++; }
+        if (newLine !== null) { output.push({ type: "add", line: escapeHtml(newLine) }); newIdx++; }
+      }
+    }
+  }
+
+  // Only show lines near changes (context of 2)
+  var filtered = [];
+  var changeIndices = {};
+  output.forEach(function(o, i) { if (o.type !== "ctx") changeIndices[i] = true; });
+  output.forEach(function(o, i) {
+    var near = false;
+    for (var d = -2; d <= 2; d++) {
+      if (changeIndices[i + d]) { near = true; break; }
+    }
+    if (near || o.type !== "ctx") {
+      filtered.push(o);
+    } else if (filtered.length > 0 && filtered[filtered.length - 1].type !== "sep") {
+      filtered.push({ type: "sep" });
+    }
+  });
+
+  return filtered.map(function(o) {
+    if (o.type === "sep") return '<span style="color:#555;">  ···</span>';
+    if (o.type === "del") return '<span class="diff-remove">- ' + o.line + '</span>';
+    if (o.type === "add") return '<span class="diff-add">+ ' + o.line + '</span>';
+    return '  ' + o.line;
+  }).join("\n");
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function closeDiff(e) {
+  if (e.target === document.getElementById("diff-overlay")) {
+    document.getElementById("diff-overlay").classList.remove("active");
+  }
+}
+
+// ─── Download ───────────────────────────────────────────────────
+function downloadJSON() {
+  if (!currentPid) return;
+
+  // Validate all inputs
+  var invalids = document.querySelectorAll("input.invalid");
+  if (invalids.length > 0) {
+    toast("Fix validation errors before downloading");
+    invalids[0].focus();
+    return;
+  }
+
+  // Update last_updated to today
+  var today = new Date().toISOString().slice(0, 10);
+  programs[currentPid].last_updated = today;
+  var metaDate = document.getElementById("meta-last_updated");
+  if (metaDate) metaDate.value = today;
+
+  var json = JSON.stringify(programs[currentPid], null, 2);
+  var blob = new Blob([json], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = currentPid + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  toast("Downloaded " + currentPid + ".json");
+  updateChangeCount();
+}
+
+// ─── Reset ──────────────────────────────────────────────────────
+function resetForm() {
+  if (!currentPid) return;
+  programs[currentPid] = JSON.parse(originalJSON[currentPid]);
+  loadProgram();
+  toast("Reset to original values");
+}
+
+// ─── Toast ──────────────────────────────────────────────────────
+function toast(msg) {
+  var el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(function() { el.classList.remove("show"); }, 2500);
+}
+</script>
+</body>
+</html>
