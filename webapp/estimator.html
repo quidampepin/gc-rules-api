@@ -307,7 +307,11 @@ function calculateCCB() {
   // Sync ages from DOM inputs back to childrenData
   var inputs = document.querySelectorAll("#children-list input[type=number]");
   inputs.forEach(function(inp, i) { if (childrenData[i]) childrenData[i].age = Number(inp.value) || 0; });
-  var children = childrenData.slice();
+  var allChildren = childrenData.slice();
+  var maxAge = p.child_max_age; // 18 — from JSON
+  var eligible = allChildren.filter(function(c) { return c.age < maxAge; });
+  var ineligible = allChildren.length - eligible.length;
+  var children = eligible;
   var num = children.length;
 
   // Step 1: max benefit
@@ -317,6 +321,16 @@ function calculateCCB() {
     if (c.age < p.young_child_age_cutoff) { totalMax += p.max_annual_under_6; underCount++; }
     else { totalMax += p.max_annual_6_to_17; overCount++; }
   });
+
+  // No eligible children
+  if (num === 0) {
+    var el = document.getElementById("ccb-result");
+    el.innerHTML = '<div class="panel panel-danger"><div class="panel-heading"><h3 class="panel-title">No eligible children</h3></div><div class="panel-body">' +
+      '<p>The Canada Child Benefit is for children <strong>under ' + maxAge + ' years of age</strong>. None of the children you entered are eligible.</p>' +
+      '</div></div>';
+    el.className = "result-box active";
+    return;
+  }
 
   // Step 2: find tier
   var table = programs["canada-child-benefit"].amounts.calculation.step_2_income_reduction.reduction_table;
@@ -343,12 +357,15 @@ function calculateCCB() {
   annual = Math.round(annual * 100) / 100;
   var monthly = Math.round(annual / 12 * 100) / 100;
 
-  var html = '<div class="panel panel-primary"><div class="panel-heading"><h3 class="panel-title">Your estimated Canada Child Benefit</h3></div><div class="panel-body">' +
-    '<p class="result-amount text-primary">' + fmt(monthly) + ' <small>per month</small></p>' +
+  var html = '<div class="panel panel-primary"><div class="panel-heading"><h3 class="panel-title">Your estimated Canada Child Benefit</h3></div><div class="panel-body">';
+  if (ineligible > 0) {
+    html += '<div class="alert alert-danger"><p><strong>' + ineligible + ' child(ren) aged ' + maxAge + '+ excluded</strong> &mdash; CCB is only for children under ' + maxAge + '.</p></div>';
+  }
+  html += '<p class="result-amount text-primary">' + fmt(monthly) + ' <small>per month</small></p>' +
     '<p class="text-muted">' + fmt(annual) + ' per year</p>' +
     '<h4 class="mrgn-tp-md">How it was calculated</h4><ul>';
-  if (underCount > 0) html += '<li>' + underCount + ' child(ren) under 6 &mdash; max ' + fmtI(p.max_annual_under_6) + '/yr each</li>';
-  if (overCount > 0) html += '<li>' + overCount + ' child(ren) aged 6-17 &mdash; max ' + fmtI(p.max_annual_6_to_17) + '/yr each</li>';
+  if (underCount > 0) html += '<li>' + underCount + ' eligible child(ren) under 6 &mdash; max ' + fmtI(p.max_annual_under_6) + '/yr each</li>';
+  if (overCount > 0) html += '<li>' + overCount + ' eligible child(ren) aged 6-17 &mdash; max ' + fmtI(p.max_annual_6_to_17) + '/yr each</li>';
   html += '<li>Maximum before reduction: ' + fmt(totalMax) + '/yr</li>';
   if (bracket === "below") {
     html += '</ul><div class="alert alert-success mrgn-tp-md"><p>Your income is at or below ' + fmtI(p.income_threshold_1) + ' &mdash; you receive the maximum amount.</p></div>';

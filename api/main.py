@@ -145,15 +145,19 @@ def calculate_benefit(program: dict, inputs: dict) -> dict:
 
     # --- CCB ---
     if pid == "canada-child-benefit":
-        children = inputs.get("children", [])
-        num_children = inputs.get("num_children", len(children))
+        all_children = inputs.get("children", [])
         family_income = inputs.get("family_net_income", 0)
 
         young_cutoff = params["young_child_age_cutoff"]
+        max_age = params["child_max_age"]  # 18
         max_under = params["max_annual_under_6"]
         max_over = params["max_annual_6_to_17"]
         threshold_1 = params["income_threshold_1"]
         threshold_2 = params["income_threshold_2"]
+
+        # Filter out children 18+ (not eligible for CCB)
+        children = [c for c in all_children if c.get("age", 0) < max_age]
+        num_children = inputs.get("num_children", len(children))
 
         # Step 1: sum max benefit per child by age
         total_max = 0

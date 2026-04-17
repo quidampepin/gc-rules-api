@@ -208,11 +208,12 @@ function updateUrlDisplay() {
 // ─── Calculators (same logic as Python API) ──────────────────────
 function calcCCB(inputs) {
   var p = params("canada-child-benefit");
-  var children = inputs.children || [];
-  var num = inputs.num_children || children.length;
+  var allChildren = inputs.children || [];
+  var eligible = allChildren.filter(function(c) { return c.age < p.child_max_age; });
+  var num = eligible.length;
   var income = inputs.family_net_income || 0;
   var totalMax = 0;
-  children.forEach(function(c) {
+  eligible.forEach(function(c) {
     totalMax += c.age < p.young_child_age_cutoff ? p.max_annual_under_6 : p.max_annual_6_to_17;
   });
   var table = programs["canada-child-benefit"].amounts.calculation.step_2_income_reduction.reduction_table;
